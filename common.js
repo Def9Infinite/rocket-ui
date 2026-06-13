@@ -59,6 +59,7 @@ const I18N = {
     c_liftoff:'LIFTOFF', c_set:'SET', c_bottom:'BOTTOM', c_timeline:'TIMELINE', c_ticker:'TICKER', c_clear:'CLEAR', ph_mmss:'mm:ss',
     // control — sources
     c_sources:'OBS BROWSER SOURCES', c_copy:'⧉ COPY URL',
+    src_dpi:'Renders @2× for sharpness — set the Browser Source to the size shown, then scale it to 50% on your canvas.',
     src_titlebar:'Title Bar', src_countdown:'Countdown', src_weather:'Range Weather', src_rocket:'Vehicle Data', src_timeline:'Flight Timeline', src_ticker:'Data Ticker',
     pos_top:'Top · full width', pos_topcenter:'Top center', pos_lowerleft:'Lower left', pos_right:'Right · sized to content', pos_bottom:'Bottom · full width', pos_bottom_alt:'Bottom · alt to timeline',
     // control — T-0
@@ -107,6 +108,7 @@ const I18N = {
     c_seq:'时序', c_start:'开始倒计时', c_hold:'暂停', c_resume:'恢复', c_sett:'设置 T−',
     c_liftoff:'起飞', c_set:'设置', c_bottom:'底栏', c_timeline:'时间轴', c_ticker:'滚动条', c_clear:'透明', ph_mmss:'分:秒',
     c_sources:'OBS 浏览器源', c_copy:'⧉ 复制网址',
+    src_dpi:'以 2× 渲染以获得清晰度 — 将浏览器源设为所示尺寸，再在画布上缩放到 50%。',
     src_titlebar:'标题栏', src_countdown:'倒计时', src_weather:'发射场气象', src_rocket:'火箭数据', src_timeline:'飞行时间轴', src_ticker:'数据滚动条',
     pos_top:'顶部 · 通栏', pos_topcenter:'顶部居中', pos_lowerleft:'左下', pos_right:'右侧 · 随内容', pos_bottom:'底部 · 通栏', pos_bottom_alt:'底部 · 时间轴替代',
     sec_t0:'起飞 · T‑0', f_t0utc:'以 UTC 日期/时间设置 T‑0', c_sett0utc:'设置 T‑0（UTC）', t0_notset:'T‑0：未设置', t0_prefix:'T‑0 · ',
@@ -314,3 +316,13 @@ const $ = id => document.getElementById(id);
 
 /* escape user-supplied text before it goes into innerHTML templates */
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------- DPI / supersampling ----------
+   OBS Browser Sources render at devicePixelRatio 1, so when a source is scaled on the
+   canvas the result looks blurry. We render overlays at N× (default 2×) via CSS zoom and
+   let OBS downscale — set the OBS source to N× the listed size and scale it to 1/N.
+   Override per page with ?s=<n> (the control panel's preview iframes use ?s=1). */
+const DPI = (function(){ try{ const q=new URLSearchParams(location.search).get('s'); return q? (parseFloat(q)||1) : 2; }catch(e){ return 2; } })();
+function applyDpi(){ if(DPI && DPI!==1) document.documentElement.style.zoom = DPI; return DPI; }
+/* auto-apply on overlay pages (the control panel has #monitor and is left at 1×) */
+if(typeof document!=='undefined' && !document.getElementById('monitor')) applyDpi();

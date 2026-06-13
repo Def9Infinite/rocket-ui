@@ -3,6 +3,13 @@
    Every overlay page has a TRANSPARENT background so it can be
    layered over your captured video feed in OBS.
    ============================================================ */
+
+/* Maple Mono — bundled locally (fonts/) so it works offline / in OBS with no CDN.
+   Source: github.com/subframe7536/maple-font (via @fontsource/maple-mono). */
+@font-face{font-family:'Maple Mono';font-style:normal;font-weight:400;font-display:swap;src:url('fonts/MapleMono-400.woff2') format('woff2')}
+@font-face{font-family:'Maple Mono';font-style:normal;font-weight:500;font-display:swap;src:url('fonts/MapleMono-500.woff2') format('woff2')}
+@font-face{font-family:'Maple Mono';font-style:normal;font-weight:700;font-display:swap;src:url('fonts/MapleMono-700.woff2') format('woff2')}
+
 :root{
   --panel:rgba(10,15,27,.78);
   --panel-solid:#0b1020;
@@ -19,7 +26,7 @@
   --nogo:#ff556e;
   --orange:#ff8a3d;
   --glow:0 0 24px rgba(52,227,230,.25);
-  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  --mono:'Maple Mono','JetBrains Mono',ui-monospace,Menlo,monospace;
   --display:'Orbitron',system-ui,sans-serif;
   --sans:'Rajdhani',system-ui,sans-serif;
 }

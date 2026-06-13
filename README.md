@@ -7,16 +7,20 @@ they stay in sync automatically.
 
 ## Files
 
-| File | Role | OBS Browser Source size |
+Overlays render at **2× (supersampling)** so they stay sharp on stream — set each OBS Browser
+Source to the size below, then **scale it to 50%** on your canvas (the on‑canvas footprint is half
+each number). Override the scale per source with `?s=<n>` in the URL (`?s=1` = no supersampling).
+
+| File | Role | OBS Browser Source size (@2×) |
 |------|------|--------------------------|
 | `index.html` | **Control panel** (operator dashboard) — *do not put on stream* | open as a window/dock |
-| `titlebar.html` | Mission name · vehicle · LIVE · status pill | **1920 × 80** — top, full width |
-| `countdown.html` | T‑minus / T‑plus clock, HOLD banner | **560 × 170** — top center |
-| `weather.html` | Live range weather + GO/NO‑GO | **300 × 330** — lower left |
-| `rocket.html` | Vehicle / stage spec block | **320 × 430** — right side (grows w/ stages) |
-| `timeline.html` | Moving flight timeline with event markers | **1920 × 92** — bottom, full width |
-| `ticker.html` | Rolling key‑info ticker (alt to timeline) | **1920 × 64** — bottom |
-| `common.js`, `styles.css` | Shared engine + theme | — |
+| `titlebar.html` | Mission name · vehicle · LIVE · status pill | **3840 × 160** — top, full width |
+| `countdown.html` | T‑minus / T‑plus clock, HOLD banner | **1120 × 340** — top center |
+| `weather.html` | Live range weather + GO/NO‑GO | **600 × 660** — lower left |
+| `rocket.html` | Vehicle / stage spec block | **640 × 920** — right side (grows w/ sections) |
+| `timeline.html` | Moving flight timeline with event markers | **3840 × 184** — bottom, full width |
+| `ticker.html` | Rolling key‑info ticker (alt to timeline) | **3840 × 128** — bottom |
+| `common.js`, `styles.css` | Shared engine + theme (Maple Mono bundled in `fonts/`) | — |
 
 ## Quick start
 
