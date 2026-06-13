@@ -4,8 +4,8 @@
     {
       "name": "stream-ui",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "4181"],
-      "port": 4181
+      "runtimeArgs": ["server.py", "4187"],
+      "port": 4187
     }
   ]
 }

@@ -20,19 +20,22 @@ they stay in sync automatically.
 
 ## Quick start
 
-1. **Serve the folder** (recommended for reliable sync):
+1. **Run the sync server** (required — this is what pushes live updates to OBS):
    ```bash
    cd "Stream UI"
-   python3 -m http.server 4178
+   python3 server.py 4187
    ```
-   Then open `http://localhost:4178/index.html` — that's the control panel.
-   (`file://` also works in OBS, but a local URL is the most reliable.)
+   Then open `http://localhost:4187/index.html` — that's the control panel.
+
+   > ⚠️ Use **`server.py`**, not `python3 -m http.server`, and load overlays by **URL, not “Local file.”**
+   > OBS Browser Sources are separate browser processes that don't share storage; the server relays
+   > state between them. Plain `http.server` / `file://` will load the overlays but they **won't update.**
 
 2. **In OBS**, add your **video capture** (Display/Window/Camera) as the bottom layer.
 
-3. For each overlay, add **Sources → + → Browser**, tick **Local file** (or paste the
-   URL shown in the control panel under *OBS Browser Sources*), and set the **size**
-   from the table above. Position each on your canvas — the control panel's
+3. For each overlay, add **Sources → + → Browser**, **paste the `http://localhost:4187/…` URL**
+   shown in the control panel under *OBS Browser Sources* (leave **Local file unchecked**), and set
+   the **size** from the table above. Position each on your canvas — the control panel's
    **Program Monitor** shows the reference layout.
 
 4. Keep the **control panel** open in its own window/dock. Everything you do there
@@ -54,9 +57,13 @@ Shortcuts: `Space` = hold/resume · `T` = timeline/ticker · `Esc` = close dialo
 
 ## How sync works
 
-State lives in the browser's `localStorage` and is broadcast to every page via
-`BroadcastChannel` + storage events, with a **300 ms polling fallback** so it still
-works across separate OBS Browser Sources (which don't always share live events).
-The clock is stored as a timestamp and each overlay computes T locally every frame,
-so the countdown is always smooth regardless of sync latency. All edits also persist,
-so a refresh (or OBS restart) restores your mission.
+OBS Browser Sources are **separate browser processes** and do **not** share `localStorage`,
+so the control panel relays state through the **sync server** (`server.py`): the panel
+`POST`s the state to `/state`, and every overlay polls `GET /state` (~300 ms) and applies it.
+`localStorage` is still used as a same‑browser fast path and for persistence. The clock is
+stored as a timestamp and each overlay computes T locally every frame, so the countdown is
+smooth regardless of sync latency. A heartbeat re‑pushes the state every few seconds, so a
+restarted server or a newly‑added source catches up automatically.
+
+**If overlays aren't updating:** you're almost certainly running plain `http.server` or loading
+overlays as **Local file**. Switch to `python3 server.py` and use the `http://localhost` URLs.

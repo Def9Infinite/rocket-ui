@@ -76,12 +76,12 @@ const I18N = {
     c_addevent:'+ ADD EVENT', c_reset:'RESET ALL',
     // control — help modal
     h_title:'OBS SETUP', h_intro:'This control panel runs the show. Each overlay is its own transparent page you add to OBS as a Browser Source — they all sync to whatever you do here.',
-    h_li1:'In OBS: + → Browser for each source. Tick “Local file” (or paste the served URL) and set the listed size.',
+    h_li1:'In OBS: + → Browser for each source. Use the http URL shown below — NOT “Local file” (live updates need the server) — and set the listed size.',
     h_li2:'Position & scale each source on your canvas — the Program Monitor here shows the reference layout.',
     h_li3:'Add your video capture (window / display / camera) as the bottom layer so overlays sit on top.',
     h_li4:'Keep this page open (it can be its own dock / window). Every control here updates all sources instantly.',
     h_li5:'Use TIMELINE or TICKER for the lower band — enable the matching OBS source.',
-    h_sync:'Sync uses the browser’s shared storage on this machine. For best reliability serve the folder over a local URL and use that URL for every source + this panel.',
+    h_sync:'Live updates need the sync server: run  python3 server.py  in this folder, then use its http://localhost URL for every source AND this panel. (Plain http.server or “Local file” will NOT sync across OBS sources.)',
     h_gotit:'GOT IT',
   },
   zh:{
@@ -119,12 +119,12 @@ const I18N = {
     sec_ftimeline:'飞行时间轴', c_timeline_hint:'时间可输入 T+02:35、-1:00 或 145（秒）。★ 表示重要节点。事件驱动移动时间轴与“下一事件”提示。',
     c_addevent:'+ 添加事件', c_reset:'全部重置',
     h_title:'OBS 设置', h_intro:'本控制台用于导播。每个叠加层都是独立的透明页面，在 OBS 中作为“浏览器源”添加 — 它们会同步你在此处的所有操作。',
-    h_li1:'在 OBS 中：+ → 浏览器，为每个源新建。勾选“本地文件”（或粘贴服务地址），并设置所列尺寸。',
+    h_li1:'在 OBS 中：+ → 浏览器，为每个源新建。使用下方的 http 网址（不要用“本地文件” — 实时更新依赖服务器），并设置所列尺寸。',
     h_li2:'在画布上摆放与缩放各源 — 此处的“节目监视器”给出参考布局。',
     h_li3:'将你的视频采集（窗口 / 显示器 / 摄像头）放在最底层，使叠加层位于其上。',
     h_li4:'保持本页面打开（可作为独立停靠窗口）。此处每个操作都会即时更新所有源。',
     h_li5:'下方条带使用“时间轴”或“滚动条” — 启用对应的 OBS 源即可。',
-    h_sync:'同步基于本机浏览器的共享存储。为获得最佳可靠性，请通过本地地址提供该文件夹，并对所有源与本面板使用该地址。',
+    h_sync:'实时更新需要同步服务器：在该文件夹中运行  python3 server.py，然后对所有源和本面板使用它的 http://localhost 网址。（普通 http.server 或“本地文件”无法在 OBS 各源之间同步。）',
     h_gotit:'知道了',
   },
 };
@@ -176,31 +176,49 @@ function defaultState(){
   };
 }
 
-/* ---------- shared state store ---------- */
+/* ---------- shared state store ----------
+   Sync works across SEPARATE browser processes (e.g. OBS Browser Sources are each
+   their own isolated browser — localStorage is NOT shared between them) by relaying
+   state through the local sync server: the control panel POSTs /state, every page
+   polls GET /state. localStorage is kept only as a same-browser fast path / persistence.
+   Requires running server.py (plain `python3 -m http.server` has no /state endpoint). */
 const STATE_KEY = 'orbital-state-v1';
-const BUS_NAME  = 'orbital-bus-v1';
+const SYNC_URL  = 'state';          // relative to the page's directory
+
+let _last = null, _lastV = -1;      // last applied state and its version
 
 function readState(){
-  try{ const s=JSON.parse(localStorage.getItem(STATE_KEY)); if(s && s.rocket && s.clock && s.events) return s; }catch(e){}
+  if(_last) return _last;
+  try{ const s=JSON.parse(localStorage.getItem(STATE_KEY)); if(s && s.rocket && s.clock && s.events){ _last=s; _lastV=s._v||0; return s; } }catch(e){}
   return defaultState();
 }
+function pushState(s){   // best-effort POST to the sync server (cross-process bridge)
+  try{ fetch(SYNC_URL, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(s), keepalive:true}).catch(()=>{}); }catch(e){}
+}
 function writeState(s){
-  s._v = (s._v||0) + 1;
-  try{ localStorage.setItem(STATE_KEY, JSON.stringify(s)); }catch(e){}
-  const bus=getBus(); if(bus){ try{ bus.postMessage(s._v); }catch(e){} }
+  s._v = Math.max(_lastV, s._v||0) + 1;                                   // monotonically increasing
+  _last = s; _lastV = s._v;
+  try{ localStorage.setItem(STATE_KEY, JSON.stringify(s)); }catch(e){}    // same-browser path
+  pushState(s);                                                          // cross-process path (OBS)
   return s;
 }
-let _bus = null;
-function getBus(){ if(_bus===null){ try{ _bus=new BroadcastChannel(BUS_NAME); }catch(e){ _bus=undefined; } } return _bus||null; }
 
-/* subscribe(cb): cb(state) fires once now and on every change from any page */
+/* subscribe(cb): cb(state) fires on every change, from any page or process */
 function subscribe(cb){
-  let lastV = null;
-  function check(){ const s=readState(); if(s._v!==lastV){ lastV=s._v; cb(s); } }
-  const bus=getBus(); if(bus) bus.addEventListener('message', check);
-  window.addEventListener('storage', e=>{ if(e.key===STATE_KEY) check(); });
-  setInterval(check, 300);   // robust fallback for OBS browser sources
-  check();
+  function apply(s){
+    if(!s || typeof s._v!=='number' || s._v <= _lastV) return;            // ignore stale / unchanged
+    _last = s; _lastV = s._v;
+    try{ localStorage.setItem(STATE_KEY, JSON.stringify(s)); }catch(e){}
+    cb(s);
+  }
+  function pollHttp(){
+    fetch(SYNC_URL, {cache:'no-store'}).then(r=>(r&&r.ok)?r.text():'').then(t=>{ if(t){ try{ apply(JSON.parse(t)); }catch(e){} } }).catch(()=>{});
+  }
+  function pollLocal(){ try{ const t=localStorage.getItem(STATE_KEY); if(t) apply(JSON.parse(t)); }catch(e){} }
+  window.addEventListener('storage', e=>{ if(e.key===STATE_KEY && e.newValue){ try{ apply(JSON.parse(e.newValue)); }catch(_){} } });
+  setInterval(pollHttp, 300);   // primary: works across separate OBS browser sources
+  setInterval(pollLocal, 500);  // fallback: same browser when no sync server is running
+  pollHttp(); pollLocal();
 }
 
 /* ---------- clock math (pure; operate on clock object) ---------- */

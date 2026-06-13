@@ -484,6 +484,7 @@ function init(){
   commit();                 // push initial state to all overlays
   refreshWeather();
   setInterval(refreshWeather,120000);
+  setInterval(()=>pushState(state), 3000);   // heartbeat: re-push so a restarted server / newly-added OBS source catches up
   syncStartLabel(); updateScale(); tickHeader();
 }
 init();
