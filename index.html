@@ -152,12 +152,12 @@ input,select{font-family:var(--mono)}
         <div class="monitor" id="monitor">
           <div class="stage1080" id="stage1080">
             <div class="feed-note">▶ <span data-i18n="c_feed_note">YOUR VIDEO FEED</span><small data-i18n="c_feed_sub">captured separately in OBS — overlays sit on top</small></div>
-            <iframe class="ov" id="ov-title"     src="titlebar.html?s=1"  scrolling="no" style="left:0;top:0;width:1920px;height:80px"></iframe>
-            <iframe class="ov" id="ov-countdown" src="countdown.html?s=1" scrolling="no" style="left:680px;top:86px;width:560px;height:170px"></iframe>
-            <iframe class="ov" id="ov-weather"   src="weather.html?s=1"   scrolling="no" style="left:24px;top:540px;width:300px;height:330px"></iframe>
-            <iframe class="ov" id="ov-rocket"    src="rocket.html?s=1"    scrolling="no" style="left:1576px;top:300px;width:320px;height:640px"></iframe>
-            <iframe class="ov" id="ov-timeline"  src="timeline.html?s=1"  scrolling="no" style="left:0;top:988px;width:1920px;height:92px"></iframe>
-            <iframe class="ov" id="ov-ticker"    src="ticker.html?s=1"    scrolling="no" style="left:0;top:1016px;width:1920px;height:64px"></iframe>
+            <iframe class="ov" id="ov-title"     src="titlebar.html?s=1"  scrolling="no" style="left:0;top:0;width:1920px;height:84px"></iframe>
+            <iframe class="ov" id="ov-countdown" src="countdown.html?s=1" scrolling="no" style="left:680px;top:84px;width:560px;height:188px"></iframe>
+            <iframe class="ov" id="ov-weather"   src="weather.html?s=1"   scrolling="no" style="left:24px;top:528px;width:300px;height:400px"></iframe>
+            <iframe class="ov" id="ov-rocket"    src="rocket.html?s=1"    scrolling="no" style="left:1576px;top:262px;width:320px;height:712px"></iframe>
+            <iframe class="ov" id="ov-timeline"  src="timeline.html?s=1"  scrolling="no" style="left:0;top:980px;width:1920px;height:100px"></iframe>
+            <iframe class="ov" id="ov-ticker"    src="ticker.html?s=1"    scrolling="no" style="left:0;top:1008px;width:1920px;height:72px"></iframe>
           </div>
         </div>
       </div>
@@ -294,12 +294,12 @@ input,select{font-family:var(--mono)}
 let state = readState();
 
 const SOURCES=[
-  {f:'titlebar.html', nk:'src_titlebar',  size:'3840 × 160',      pk:'pos_top'},
-  {f:'countdown.html',nk:'src_countdown', size:'1120 × 340',      pk:'pos_topcenter'},
-  {f:'weather.html',  nk:'src_weather',   size:'600 × 660',       pk:'pos_lowerleft'},
-  {f:'rocket.html',   nk:'src_rocket',    size:'640 × 920–1440',  pk:'pos_right'},
-  {f:'timeline.html', nk:'src_timeline',  size:'3840 × 184',      pk:'pos_bottom'},
-  {f:'ticker.html',   nk:'src_ticker',    size:'3840 × 128',      pk:'pos_bottom_alt'},
+  {f:'titlebar.html', nk:'src_titlebar',  size:'3840 × 168',       pk:'pos_top'},
+  {f:'countdown.html',nk:'src_countdown', size:'1120 × 376',       pk:'pos_topcenter'},
+  {f:'weather.html',  nk:'src_weather',   size:'600 × 800',        pk:'pos_lowerleft'},
+  {f:'rocket.html',   nk:'src_rocket',    size:'640 × 1344–1900',  pk:'pos_right'},
+  {f:'timeline.html', nk:'src_timeline',  size:'3840 × 200',       pk:'pos_bottom'},
+  {f:'ticker.html',   nk:'src_ticker',    size:'3840 × 144',       pk:'pos_bottom_alt'},
 ];
 
 /* ---- built-in vehicle presets (spec only) ---- */

@@ -14,12 +14,12 @@ each number). Override the scale per source with `?s=<n>` in the URL (`?s=1` = n
 | File | Role | OBS Browser Source size (@2×) |
 |------|------|--------------------------|
 | `index.html` | **Control panel** (operator dashboard) — *do not put on stream* | open as a window/dock |
-| `titlebar.html` | Mission name · vehicle · LIVE · status pill | **3840 × 160** — top, full width |
-| `countdown.html` | T‑minus / T‑plus clock, HOLD banner | **1120 × 340** — top center |
-| `weather.html` | Live range weather + GO/NO‑GO | **600 × 660** — lower left |
-| `rocket.html` | Vehicle / stage spec block | **640 × 920** — right side (grows w/ sections) |
-| `timeline.html` | Moving flight timeline with event markers | **3840 × 184** — bottom, full width |
-| `ticker.html` | Rolling key‑info ticker (alt to timeline) | **3840 × 128** — bottom |
+| `titlebar.html` | Mission name · vehicle · LIVE · status pill | **3840 × 168** — top, full width |
+| `countdown.html` | T‑minus / T‑plus clock, HOLD banner | **1120 × 376** — top center |
+| `weather.html` | Live range weather + GO/NO‑GO | **600 × 800** — lower left |
+| `rocket.html` | Vehicle / stage spec block | **640 × 1344** — right side (grows w/ sections) |
+| `timeline.html` | Moving flight timeline with event markers | **3840 × 200** — bottom, full width |
+| `ticker.html` | Rolling key‑info ticker (alt to timeline) | **3840 × 144** — bottom |
 | `common.js`, `styles.css` | Shared engine + theme (Maple Mono bundled in `fonts/`) | — |
 
 ## Quick start
