@@ -155,8 +155,8 @@ input,select{font-family:var(--mono)}
             <iframe class="ov" id="ov-title"     src="titlebar.html?s=1"  scrolling="no" style="left:0;top:0;width:1920px;height:84px"></iframe>
             <iframe class="ov" id="ov-countdown" src="countdown.html?s=1" scrolling="no" style="left:680px;top:84px;width:560px;height:188px"></iframe>
             <iframe class="ov" id="ov-weather"   src="weather.html?s=1"   scrolling="no" style="left:24px;top:528px;width:300px;height:400px"></iframe>
-            <iframe class="ov" id="ov-rocket"    src="rocket.html?s=1"    scrolling="no" style="left:1576px;top:262px;width:320px;height:712px"></iframe>
-            <iframe class="ov" id="ov-timeline"  src="timeline.html?s=1"  scrolling="no" style="left:0;top:980px;width:1920px;height:100px"></iframe>
+            <iframe class="ov" id="ov-rocket"    src="rocket.html?s=1"    scrolling="no" style="left:1576px;top:244px;width:320px;height:706px"></iframe>
+            <iframe class="ov" id="ov-timeline"  src="timeline.html?s=1"  scrolling="no" style="left:0;top:976px;width:1920px;height:104px"></iframe>
             <iframe class="ov" id="ov-ticker"    src="ticker.html?s=1"    scrolling="no" style="left:0;top:1008px;width:1920px;height:72px"></iframe>
           </div>
         </div>
@@ -179,8 +179,9 @@ input,select{font-family:var(--mono)}
         <div class="divider"></div>
         <div class="cg"><span class="gl" data-i18n="c_bottom">BOTTOM</span>
           <div class="seg"><button id="seg-tl" class="on" data-i18n="c_timeline">TIMELINE</button><button id="seg-tk" data-i18n="c_ticker">TICKER</button></div>
-          <label class="sw" title="Semi-transparent band background" style="margin-left:8px"><input type="checkbox" id="en-clear"><span></span></label>
-          <span class="gl" data-i18n="c_clear">CLEAR</span>
+        </div>
+        <div class="cg"><span class="gl" data-i18n="c_bg">BG</span>
+          <div class="seg" id="bg-seg"><button id="bg-solid" data-i18n="c_bg_solid">SOLID</button><button id="bg-half" data-i18n="c_bg_half">HALF</button><button id="bg-clear" data-i18n="c_bg_clear">CLEAR</button></div>
         </div>
       </div>
 
@@ -298,7 +299,7 @@ const SOURCES=[
   {f:'countdown.html',nk:'src_countdown', size:'1120 × 376',       pk:'pos_topcenter'},
   {f:'weather.html',  nk:'src_weather',   size:'600 × 800',        pk:'pos_lowerleft'},
   {f:'rocket.html',   nk:'src_rocket',    size:'640 × 1344–1900',  pk:'pos_right'},
-  {f:'timeline.html', nk:'src_timeline',  size:'3840 × 200',       pk:'pos_bottom'},
+  {f:'timeline.html', nk:'src_timeline',  size:'3840 × 208',       pk:'pos_bottom'},
   {f:'ticker.html',   nk:'src_ticker',    size:'3840 × 144',       pk:'pos_bottom_alt'},
 ];
 
@@ -411,7 +412,10 @@ $('lang-zh').onclick=()=>setLang('zh');
 function setBottom(v){ state.bottomView=v; $('seg-tl').classList.toggle('on',v==='timeline'); $('seg-tk').classList.toggle('on',v==='ticker'); $('ov-timeline').classList.toggle('hidden',v!=='timeline'); $('ov-ticker').classList.toggle('hidden',v!=='ticker'); commit(); }
 $('seg-tl').onclick=()=>setBottom('timeline');
 $('seg-tk').onclick=()=>setBottom('ticker');
-$('en-clear').onchange=()=>{ state.tlClear=$('en-clear').checked; commit(); };
+function setBg(level){ state.tlBg=level; delete state.tlClear; ['solid','half','clear'].forEach(l=>$('bg-'+l).classList.toggle('on', l===level)); commit(); }
+$('bg-solid').onclick=()=>setBg('solid');
+$('bg-half').onclick=()=>setBg('half');
+$('bg-clear').onclick=()=>setBg('clear');
 
 /* ---- UTC T-0 setter ---- */
 $('btn-t0utc').onclick=()=>{ const e=parseUTCLocalInput($('f-t0utc').value); if(e==null){ toast('ENTER A VALID DATE/TIME'); return; } state.clock=clkSetT0(e); commit(); syncStartLabel(); toast('T‑0 SET · '+utcString(e)); };
@@ -478,7 +482,7 @@ window.addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.t
 function init(){
   if(state.clock.mode==='idle') state.clock=clkSetCountdown(600); // looks live on first open
   buildSiteSelect(); fillForms(); bindForms(); buildEventEditor(); buildSources(); buildTemplateSelect();
-  $('en-clear').checked=!!state.tlClear;
+  state.tlBg=bgLevel(state); ['solid','half','clear'].forEach(l=>$('bg-'+l).classList.toggle('on', l===state.tlBg));
   applyI18n(document, state.lang);
   $('lang-en').classList.toggle('on', state.lang!=='zh'); $('lang-zh').classList.toggle('on', state.lang==='zh');
   setBottom(state.bottomView||'timeline');

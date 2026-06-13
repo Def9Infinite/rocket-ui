@@ -106,33 +106,40 @@ body{font-family:var(--sans);color:var(--txt);background:transparent;-webkit-fon
 .ri-row .v{font-family:var(--mono);font-size:14px;color:var(--txt);text-align:right;font-weight:500}
 .ri-row .v.hl{color:var(--cyan)}
 
-/* ==================== TIMELINE (slim ≤100px · two-lane) ==================== */
-.timeline{position:absolute;inset:0;background:linear-gradient(0deg,rgba(6,10,20,.82),rgba(6,10,20,.42));border-top:1px solid var(--line);backdrop-filter:blur(4px)}
-.timeline.clear,.ticker.clear{background:transparent;backdrop-filter:none;border-top-color:rgba(120,160,220,.14)}
+/* ==================== TIMELINE (line near top · all labels below · leader lines) ==================== */
+.timeline{position:absolute;inset:0}
 .tl-viewport{position:absolute;inset:0;overflow:hidden}
 .tl-track{position:absolute;top:0;height:100%;left:0;will-change:transform}
-.tl-axis{position:absolute;left:0;right:0;top:50px;height:2px;background:linear-gradient(90deg,transparent,var(--line-strong),transparent);z-index:1}
-.tl-tick{position:absolute;top:45px;width:1px;height:11px;background:var(--line)}
-.tl-ev{position:absolute;top:0;height:100%;transform:translateX(-50%);text-align:center;width:108px}
-.tl-ev .dot{position:absolute;top:44px;left:50%;transform:translateX(-50%);width:13px;height:13px;border-radius:50%;background:var(--panel-solid);border:2px solid var(--txt-faint);transition:.3s;z-index:2}
-.tl-ev .lbl{position:absolute;left:0;right:0;font-family:var(--display);font-size:12px;font-weight:800;letter-spacing:.3px;color:var(--txt-dim);line-height:1.1;transition:color .3s,opacity .25s;text-shadow:0 1px 5px rgba(0,0,0,1)}
-.tl-ev .tm{position:absolute;left:0;right:0;font-family:var(--mono);font-size:10.5px;font-weight:700;color:var(--txt-dim);transition:opacity .25s;text-shadow:0 1px 5px rgba(0,0,0,1)}
-.tl-ev.up .lbl{top:4px}.tl-ev.up .tm{top:22px}
-.tl-ev.down .lbl{top:57px}.tl-ev.down .tm{top:75px}
-.tl-ev .dot::after{content:'';position:absolute;left:50%;transform:translateX(-50%);width:1px;height:8px;background:var(--line-strong)}
-.tl-ev.up .dot::after{bottom:12px}
-.tl-ev.down .dot::after{top:12px}
-.tl-ev.major .dot{border-color:var(--cyan);width:15px;height:15px;top:43px}
+.tl-axis{position:absolute;left:0;right:0;top:26px;height:2px;background:linear-gradient(90deg,transparent,var(--line-strong),transparent);z-index:1}
+.tl-tick{position:absolute;top:22px;width:1px;height:9px;background:var(--line)}
+.tl-ev{position:absolute;top:0;height:100%;width:0}
+.tl-ev .dot{position:absolute;top:20px;left:50%;transform:translateX(-50%);width:13px;height:13px;border-radius:50%;background:var(--panel-solid);border:2px solid var(--txt-faint);transition:.3s;z-index:3}
+/* leader line (rotated): connects the dot to its label, which the JS may shift left/right to avoid overlap */
+.tl-ev .leader{position:absolute;height:1.5px;background:var(--line-strong);transform-origin:0 0;z-index:0;transition:opacity .2s}
+/* labels are sized to their text (measured) so the JS can pack 2 lanes + horizontal shift without overlap */
+.tl-ev .lbl{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:var(--display);font-size:14px;font-weight:800;letter-spacing:.3px;color:var(--txt-dim);line-height:1.1;transition:color .3s,opacity .2s;text-shadow:0 1px 6px rgba(0,0,0,1)}
+.tl-ev .tm{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--txt-dim);transition:opacity .2s;text-shadow:0 1px 6px rgba(0,0,0,1)}
+.tl-ev.la .lbl{top:37px}.tl-ev.la .tm{top:53px}
+.tl-ev.lb .lbl{top:68px}.tl-ev.lb .tm{top:84px}
+.tl-ev.major .dot{border-color:var(--cyan);width:15px;height:15px;top:19px}
 .tl-ev.major .lbl{color:var(--cyan)}
+.tl-ev.major .leader{background:rgba(52,227,230,.5)}
 .tl-ev.passed .dot{background:var(--go);border-color:var(--go);box-shadow:0 0 10px rgba(55,245,160,.6)}
 .tl-ev.passed .lbl{color:var(--txt)}
+.tl-ev.passed .leader{background:rgba(55,245,160,.5)}
 .tl-ev.next .dot{border-color:var(--hold);box-shadow:0 0 12px rgba(255,194,77,.7);animation:pulse 1.2s infinite}
 .tl-ev.next .lbl{color:var(--hold)}
-.tl-playhead{position:absolute;top:6px;bottom:6px;width:2px;left:50%;background:linear-gradient(180deg,transparent,var(--cyan) 18%,var(--cyan) 82%,transparent);z-index:5;box-shadow:0 0 12px var(--cyan)}
-.tl-now{position:absolute;top:4px;left:10px;z-index:6;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:1px;background:rgba(4,7,14,.72);padding:2px 8px;border-radius:5px;border:1px solid var(--line)}
+.tl-ev.next .leader{background:var(--hold)}
+.tl-playhead{position:absolute;top:6px;bottom:6px;width:2px;left:50%;background:linear-gradient(180deg,transparent,var(--cyan) 16%,var(--cyan) 84%,transparent);z-index:5;box-shadow:0 0 12px var(--cyan)}
+.tl-now{position:absolute;top:6px;left:10px;z-index:6;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:1px;background:rgba(4,7,14,.72);padding:2px 8px;border-radius:5px;border:1px solid var(--line)}
+
+/* bottom-band background levels (timeline + ticker) */
+.timeline.bg-solid,.ticker.bg-solid{background:linear-gradient(0deg,rgba(6,10,20,.97),rgba(6,10,20,.85));backdrop-filter:blur(6px);border-top:1px solid var(--line)}
+.timeline.bg-half,.ticker.bg-half{background:linear-gradient(0deg,rgba(6,10,20,.6),rgba(6,10,20,.28));backdrop-filter:blur(4px);border-top:1px solid var(--line)}
+.timeline.bg-clear,.ticker.bg-clear{background:transparent;backdrop-filter:none;border-top:1px solid rgba(120,160,220,.14)}
 
 /* ==================== TICKER ==================== */
-.ticker{position:absolute;inset:0;display:flex;align-items:center;overflow:hidden;background:linear-gradient(0deg,rgba(6,10,20,.82),rgba(6,10,20,.5));border-top:1px solid var(--line);backdrop-filter:blur(4px)}
+.ticker{position:absolute;inset:0;display:flex;align-items:center;overflow:hidden}
 .ticker-label{position:absolute;left:0;top:0;bottom:0;z-index:3;display:flex;align-items:center;padding:0 22px;background:linear-gradient(90deg,rgba(6,10,20,1) 72%,transparent);font-family:var(--display);font-weight:800;letter-spacing:2px;color:var(--cyan);font-size:16px;gap:9px}
 .ticker-track{display:flex;white-space:nowrap;animation:scroll 50s linear infinite;will-change:transform}
 .ticker:hover .ticker-track{animation-play-state:paused}

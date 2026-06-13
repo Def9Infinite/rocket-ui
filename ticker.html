@@ -17,7 +17,7 @@
 <script>
 let lastSig=null;
 function render(state){
-  $('tk-root').classList.toggle('clear', !!state.tlClear);
+  { const r=$('tk-root'); r.classList.remove('bg-solid','bg-half','bg-clear'); r.classList.add('bg-'+bgLevel(state)); }
   applyI18n(document, state.lang);
   const items=tickerItems(state);
   const sig=JSON.stringify(items);

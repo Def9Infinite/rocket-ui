@@ -57,6 +57,7 @@ const I18N = {
     // control — transport
     c_seq:'SEQ', c_start:'START COUNT', c_hold:'HOLD', c_resume:'RESUME', c_sett:'SET T−',
     c_liftoff:'LIFTOFF', c_set:'SET', c_bottom:'BOTTOM', c_timeline:'TIMELINE', c_ticker:'TICKER', c_clear:'CLEAR', ph_mmss:'mm:ss',
+    c_bg:'BG', c_bg_solid:'SOLID', c_bg_half:'HALF', c_bg_clear:'CLEAR',
     // control — sources
     c_sources:'OBS BROWSER SOURCES', c_copy:'⧉ COPY URL',
     src_dpi:'Renders @2× for sharpness — set the Browser Source to the size shown, then scale it to 50% on your canvas.',
@@ -107,6 +108,7 @@ const I18N = {
     c_feed_note:'你的视频画面', c_feed_sub:'在 OBS 中单独采集 — 叠加层位于其上',
     c_seq:'时序', c_start:'开始倒计时', c_hold:'暂停', c_resume:'恢复', c_sett:'设置 T−',
     c_liftoff:'起飞', c_set:'设置', c_bottom:'底栏', c_timeline:'时间轴', c_ticker:'滚动条', c_clear:'透明', ph_mmss:'分:秒',
+    c_bg:'背景', c_bg_solid:'不透明', c_bg_half:'半透明', c_bg_clear:'透明',
     c_sources:'OBS 浏览器源', c_copy:'⧉ 复制网址',
     src_dpi:'以 2× 渲染以获得清晰度 — 将浏览器源设为所示尺寸，再在画布上缩放到 50%。',
     src_titlebar:'标题栏', src_countdown:'倒计时', src_weather:'发射场气象', src_rocket:'火箭数据', src_timeline:'飞行时间轴', src_ticker:'数据滚动条',
@@ -145,6 +147,8 @@ const DIR_ZH = ['北','北偏东','东北','东偏北','东','东偏南','东南
 function wxCondText(code, lang){ if(lang==='zh') return WMO_ZH[code]||'—'; const m=WMO[code]; return m?m[0]:'—'; }
 function dirNameI18n(d, lang){ return lang==='zh' ? DIR_ZH[Math.round(d/22.5)%16] : dirName(d); }
 function wxVerdictText(verdict, lang){ return verdict==='GO' ? tr('wx_go',lang) : tr('wx_nogo',lang); }
+/* bottom-band background level: 'solid' | 'half' | 'clear' (with back-compat for old tlClear) */
+function bgLevel(state){ return state.tlBg || (state.tlClear ? 'clear' : 'half'); }
 
 /* ---------- default mission ---------- */
 function defaultState(){
@@ -153,7 +157,7 @@ function defaultState(){
     vehicle:'FALCON 9 BLOCK 5',
     site:'slc40',
     bottomView:'timeline',                    // 'timeline' | 'ticker'
-    tlClear:false,                            // semi-transparent bottom band
+    tlBg:'half',                              // bottom band background: 'solid' | 'half' | 'clear'
     lang:'en',                                // 'en' | 'zh'
     clock:{mode:'idle', t0:null, holdT:null}, // mode: idle | counting | hold
     weather:null,

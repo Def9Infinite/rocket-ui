@@ -18,7 +18,7 @@ each number). Override the scale per source with `?s=<n>` in the URL (`?s=1` = n
 | `countdown.html` | T‑minus / T‑plus clock, HOLD banner | **1120 × 376** — top center |
 | `weather.html` | Live range weather + GO/NO‑GO | **600 × 800** — lower left |
 | `rocket.html` | Vehicle / stage spec block | **640 × 1344** — right side (grows w/ sections) |
-| `timeline.html` | Moving flight timeline with event markers | **3840 × 200** — bottom, full width |
+| `timeline.html` | Moving flight timeline with event markers | **3840 × 208** — bottom, full width |
 | `ticker.html` | Rolling key‑info ticker (alt to timeline) | **3840 × 144** — bottom |
 | `common.js`, `styles.css` | Shared engine + theme (Maple Mono bundled in `fonts/`) | — |
 
