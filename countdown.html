@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ORBITAL · Countdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="countdown">
+  <div class="cd-label" data-i18n="countdown">COUNTDOWN</div>
+  <div class="cd-clock" id="cd-clock">
+    <span class="cd-sign" id="cd-sign">T-</span>
+    <span class="cd-digits" id="cd-digits">00:00:00</span>
+  </div>
+  <div class="cd-sub" id="cd-sub" data-i18n="sub_await">AWAITING COUNT START</div>
+  <div class="hold-banner" data-i18n="count_held">⚠ COUNT HELD ⚠</div>
+</div>
+<script src="common.js"></script>
+<script>
+let state=readState();
+function frame(){
+  const lang=state.lang, t=currentT(state.clock), cl=$('cd-clock');
+  cl.classList.remove('flight','hold');
+  if(state.clock.mode==='hold') cl.classList.add('hold');
+  else if(t!=null && t>=0) cl.classList.add('flight');
+  if(t==null){ $('cd-sign').textContent='T-'; $('cd-digits').textContent='00:00:00'; }
+  else{ $('cd-sign').textContent='T'+(t<=0?'−':'+'); $('cd-digits').textContent=fmt(t).str; }
+  const sub=$('cd-sub');
+  if(state.clock.mode==='hold') sub.textContent=tr('sub_hold',lang);
+  else if(t==null) sub.textContent=tr('sub_await',lang);
+  else if(t<0) sub.textContent=tr('sub_go',lang);
+  else sub.textContent=tr('sub_flight',lang);
+  requestAnimationFrame(frame);
+}
+subscribe(s=>{ state=s; applyI18n(document, state.lang); });
+frame();
+</script>
+</body>
+</html>

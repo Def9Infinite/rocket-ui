@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ORBITAL · Weather</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="weather">
+  <div class="wx-head"><span class="wx-title" data-i18n="wx_title">RANGE WEATHER</span><span class="wx-site" id="wx-site">—</span></div>
+  <div class="wx-main">
+    <div class="wx-ico" id="wx-ico"></div>
+    <div><div class="wx-temp" id="wx-temp">--<span>°C</span></div><div class="wx-cond" id="wx-cond" data-i18n="wx_await">Awaiting data…</div></div>
+  </div>
+  <div class="wx-grid">
+    <div class="wx-cell"><div class="k" data-i18n="wx_wind">Wind</div><div class="v" id="wx-wind">— km/h</div></div>
+    <div class="wx-cell"><div class="k" data-i18n="wx_gust">Gusts</div><div class="v" id="wx-gust">— km/h</div></div>
+    <div class="wx-cell"><div class="k" data-i18n="wx_hum">Humidity</div><div class="v" id="wx-hum">—%</div></div>
+    <div class="wx-cell"><div class="k" data-i18n="wx_pres">Pressure</div><div class="v" id="wx-pres">— hPa</div></div>
+    <div class="wx-cell"><div class="k" data-i18n="wx_cloud">Cloud</div><div class="v" id="wx-cloud">—%</div></div>
+    <div class="wx-cell"><div class="k" data-i18n="wx_vis">Visibility</div><div class="v" id="wx-vis">— km</div></div>
+  </div>
+  <div class="wx-verdict"><span class="lab" data-i18n="wx_launch">Launch Weather</span><span class="wx-badge go" id="wx-verdict">—</span></div>
+  <div class="wx-src" id="wx-src">—</div>
+</div>
+<script src="common.js"></script>
+<script>
+function render(state){
+  const lang=state.lang;
+  applyI18n(document, lang);
+  $('wx-site').textContent=SITES[state.site].name;
+  const w=state.weather;
+  if(!w){ $('wx-cond').textContent=tr('wx_await',lang); $('wx-src').textContent='—'; return; }
+  $('wx-temp').innerHTML=`${w.temp}<span>°C</span>`;
+  const m=WMO[w.code]||['—',wxCloud]; $('wx-cond').textContent=wxCondText(w.code,lang); $('wx-ico').innerHTML=m[1]();
+  $('wx-wind').textContent=`${w.wind} km/h ${dirNameI18n(w.dir,lang)}`;
+  $('wx-gust').textContent=`${w.gust} km/h`;
+  $('wx-hum').textContent=`${w.hum}%`;
+  $('wx-pres').textContent=`${w.pres} hPa`;
+  $('wx-cloud').textContent=`${w.cloud}%`;
+  $('wx-vis').textContent=`${w.vis} km`;
+  const b=$('wx-verdict'); b.textContent=wxVerdictText(w.verdict,lang); b.className='wx-badge '+(w.verdict==='GO'?'go':'nogo');
+  $('wx-src').textContent=`${w.live?tr('wx_live',lang):tr('wx_sim',lang)} · open-meteo · ${w.region||SITES[state.site].region}`;
+}
+subscribe(render);
+</script>
+</body>
+</html>

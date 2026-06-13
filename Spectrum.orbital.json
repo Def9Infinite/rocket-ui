@@ -1,0 +1,105 @@
+{
+  "type": "orbital-profile",
+  "version": 1,
+  "name": "Spectrum",
+  "mission": "Onward and Upward",
+  "vehicle": "Spectrum",
+  "rocket": {
+    "name": "Spectrum",
+    "operator": "Isar Aerospace",
+    "height": "28 m",
+    "diameter": "2 m",
+    "mass": "549,054 kg",
+    "payload": "1,000 kg (LEO)/700 kg (SSO)",
+    "s1eng": "9 × Aquila",
+    "s1thrust": "7,607 kN (SL)",
+    "s1burn": "162 s",
+    "s1prop": "LOX / RP-1",
+    "s2eng": "1 × Merlin 1D Vac",
+    "s2thrust": "981 kN",
+    "s2burn": "397 s",
+    "fairing": "13.1 m × 5.2 m"
+  },
+  "events": [
+    {
+      "t": -3540,
+      "l": "Prop Load Begins",
+      "m": false
+    },
+    {
+      "t": -1140,
+      "l": "2nd Stage LOX Load",
+      "m": false
+    },
+    {
+      "t": -420,
+      "l": "Strongback Retract",
+      "m": false
+    },
+    {
+      "t": -60,
+      "l": "Startup",
+      "m": false
+    },
+    {
+      "t": -3,
+      "l": "Engine Ignition",
+      "m": false
+    },
+    {
+      "t": 0,
+      "l": "Liftoff",
+      "m": true
+    },
+    {
+      "t": 72,
+      "l": "Max-Q",
+      "m": false
+    },
+    {
+      "t": 145,
+      "l": "MECO",
+      "m": true
+    },
+    {
+      "t": 149,
+      "l": "Stage Sep",
+      "m": true
+    },
+    {
+      "t": 156,
+      "l": "SES-1",
+      "m": false
+    },
+    {
+      "t": 165,
+      "l": "Boostback Burn",
+      "m": false
+    },
+    {
+      "t": 222,
+      "l": "Fairing Sep",
+      "m": true
+    },
+    {
+      "t": 390,
+      "l": "Entry Burn",
+      "m": false
+    },
+    {
+      "t": 480,
+      "l": "Landing Burn",
+      "m": false
+    },
+    {
+      "t": 512,
+      "l": "Booster Landing",
+      "m": true
+    },
+    {
+      "t": 525,
+      "l": "SECO-1",
+      "m": true
+    }
+  ]
+}

@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ORBITAL · Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+body{background:radial-gradient(1200px 700px at 75% -10%,#101a33 0%,#080b16 45%,#04050a 100%);overflow:hidden}
+.app{display:grid;grid-template-rows:auto 1fr;height:100vh}
+
+/* header */
+.c-top{display:flex;align-items:center;gap:18px;padding:12px 22px;border-bottom:1px solid var(--line);background:rgba(8,12,22,.6);backdrop-filter:blur(10px)}
+.c-brand{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:800;letter-spacing:2px;font-size:16px}
+.c-brand svg{width:34px;height:34px}
+.c-brand span{color:var(--cyan)}
+.c-mini{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:9px;border:1px solid var(--line-strong);background:rgba(0,0,0,.3);font-family:var(--display);font-weight:700;letter-spacing:1.5px}
+.c-mini .lab{font-size:9px;color:var(--txt-faint);letter-spacing:2px}
+.c-mini #c-clock{font-size:18px;font-variant-numeric:tabular-nums;color:var(--cyan)}
+.c-status{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:2px;padding:7px 14px;border-radius:9px;border:1px solid var(--line-strong)}
+.c-status .d{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor}
+.c-status.go{color:var(--go)}.c-status.flight{color:#9cc0ff}.c-status.hold{color:var(--hold)}.c-status.standby{color:var(--txt-dim)}.c-status.count{color:var(--cyan)}
+.spacer{flex:1}
+.hbtn{padding:9px 16px;border:1px solid var(--line-strong);border-radius:10px;background:rgba(52,227,230,.07);color:var(--cyan);font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:1.5px}
+.hbtn:hover{background:rgba(52,227,230,.16)}
+
+/* body split */
+.c-body{display:grid;grid-template-columns:1fr 452px;min-height:0}
+.c-left{display:flex;flex-direction:column;min-width:0;padding:18px 18px 0;gap:14px;overflow:hidden}
+.c-right{border-left:1px solid var(--line);background:rgba(7,10,18,.5);overflow-y:auto;padding:18px 18px 60px}
+
+/* preview monitor */
+.monitor-wrap{position:relative}
+.monitor-cap{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.monitor-cap .t{font-family:var(--display);font-size:11px;letter-spacing:2.5px;color:var(--txt-dim)}
+.monitor-cap .t b{color:var(--cyan)}
+.monitor-cap .legend{font-size:10px;color:var(--txt-faint);font-family:var(--mono)}
+.monitor{position:relative;width:100%;aspect-ratio:16/9;border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;background:#020306;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.stage1080{position:absolute;top:0;left:0;width:1920px;height:1080px;transform-origin:top left}
+.feed-note{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:repeating-linear-gradient(45deg,#070b14,#070b14 22px,#090e18 22px,#090e18 44px);
+  color:#3c4a63;font-family:var(--display);font-weight:800;letter-spacing:6px;font-size:34px;text-align:center}
+.feed-note small{font-family:var(--mono);font-weight:400;letter-spacing:2px;font-size:15px;color:#2f3b52}
+.ov{position:absolute;border:0;background:transparent;pointer-events:none}
+.ov.hidden{display:none}
+
+/* transport */
+.transport{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(8,12,22,.5)}
+.cg{display:flex;align-items:center;gap:6px}
+.cg .gl{font-size:9px;letter-spacing:2px;color:var(--txt-faint);text-transform:uppercase;margin-right:3px}
+.btn{padding:9px 14px;border:1px solid var(--line-strong);border-radius:9px;background:rgba(255,255,255,.03);font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:1.2px;color:var(--txt);transition:.16s;white-space:nowrap}
+.btn:hover{background:rgba(255,255,255,.09);border-color:var(--cyan-deep)}
+.btn.go{color:var(--go);border-color:rgba(55,245,160,.45)}.btn.go:hover{background:rgba(55,245,160,.14)}
+.btn.hold{color:var(--hold);border-color:rgba(255,194,77,.45)}.btn.hold:hover{background:rgba(255,194,77,.14)}
+.btn.nogo{color:var(--nogo);border-color:rgba(255,85,110,.45)}.btn.nogo:hover{background:rgba(255,85,110,.14)}
+.btn.sm{padding:7px 10px;font-size:11px}
+.btn.disabled{opacity:.38;pointer-events:none}
+.btn.on{background:rgba(52,227,230,.16);border-color:var(--cyan);color:var(--cyan)}
+.preset{padding:7px 11px;border:1px solid var(--line);border-radius:8px;background:rgba(0,0,0,.3);font-family:var(--mono);font-size:11px;color:var(--txt-dim)}
+.preset:hover{color:var(--cyan);border-color:var(--cyan-deep)}
+.divider{width:1px;height:26px;background:var(--line)}
+.seg{display:flex;border:1px solid var(--line-strong);border-radius:9px;overflow:hidden}
+.seg button{padding:8px 13px;font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:1px;color:var(--txt-dim)}
+.seg button.on{background:rgba(52,227,230,.16);color:var(--cyan)}
+input,select{font-family:var(--mono)}
+
+/* sources */
+.sources{flex:1;overflow-y:auto;padding-bottom:18px}
+.sources h3{font-family:var(--display);font-size:11px;letter-spacing:2.5px;color:var(--cyan);margin:4px 0 10px;display:flex;align-items:center;gap:10px}
+.sources h3::after{content:'';flex:1;height:1px;background:var(--line)}
+.src-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.src{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:rgba(8,12,22,.5)}
+.src .n{font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:.5px}
+.src .meta{font-family:var(--mono);font-size:10px;color:var(--txt-faint);margin-top:3px}
+.src .url{font-family:var(--mono);font-size:10px;color:var(--txt-dim);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:rgba(0,0,0,.35);padding:5px 7px;border-radius:6px;border:1px solid var(--line)}
+.src .cp{margin-top:7px;width:100%;padding:6px;border:1px solid var(--line-strong);border-radius:7px;color:var(--cyan);font-family:var(--display);font-weight:700;font-size:10px;letter-spacing:1px}
+.src .cp:hover{background:rgba(52,227,230,.12)}
+
+/* right panel forms */
+.sec{margin:6px 0 12px;font-family:var(--display);font-size:11px;letter-spacing:2.5px;color:var(--cyan);text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.sec:not(:first-child){margin-top:24px}
+.sec::after{content:'';flex:1;height:1px;background:var(--line)}
+.sec-opt{display:flex;align-items:center;gap:10px;margin:24px 0 12px;font-family:var(--display);font-size:11px;letter-spacing:2.5px;color:var(--cyan);text-transform:uppercase}
+.sec-opt .ln{flex:1;height:1px;background:var(--line)}
+.sec-opt.off{color:var(--txt-faint)}
+.sw{position:relative;width:34px;height:18px;flex:none;cursor:pointer}
+.sw input{opacity:0;width:0;height:0;position:absolute}
+.sw > span{position:absolute;inset:0;background:rgba(255,255,255,.08);border:1px solid var(--line-strong);border-radius:20px;transition:.2s}
+.sw > span::before{content:'';position:absolute;width:12px;height:12px;border-radius:50%;background:var(--txt-dim);top:2px;left:2px;transition:.2s}
+.sw input:checked + span{background:rgba(52,227,230,.25);border-color:var(--cyan)}
+.sw input:checked + span::before{transform:translateX(16px);background:var(--cyan)}
+.opt-fields.hidden{display:none}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:10px;letter-spacing:1.6px;color:var(--txt-faint);text-transform:uppercase;margin-bottom:5px;font-weight:700}
+.field input,.field select{width:100%;padding:8px 9px;border-radius:8px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tpl-bar{display:flex;gap:6px;margin-bottom:12px;align-items:center}
+.tpl-bar select{flex:1;padding:8px 9px;border-radius:8px;min-width:0}
+.tpl-bar .btn{padding:8px 10px;font-size:10px}
+.ev-editor{display:flex;flex-direction:column;gap:7px}
+.ev-row{display:grid;grid-template-columns:92px 1fr auto auto;gap:6px;align-items:center}
+.ev-row input{width:100%;padding:7px 8px;border-radius:7px}
+.ev-row .ic{width:30px;height:30px;border:1px solid var(--line);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.ev-row .star{color:var(--cyan)}.ev-row .star:hover{background:rgba(52,227,230,.1)}
+.ev-row .del{color:var(--nogo)}.ev-row .del:hover{background:rgba(255,85,110,.12)}
+.add-ev{margin-top:9px;width:100%;padding:9px;border:1px dashed var(--line-strong);border-radius:8px;color:var(--cyan);font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:1.5px}
+.add-ev:hover{background:rgba(52,227,230,.08)}
+.hint{font-size:10.5px;color:var(--txt-faint);line-height:1.5;margin:2px 0 8px;font-family:var(--mono)}
+.foot-row{display:flex;gap:10px;margin-top:18px}
+.foot-row .btn{flex:1;text-align:center;padding:11px}
+.btn.primary{background:rgba(52,227,230,.14);border-color:var(--cyan);color:var(--cyan)}
+
+/* help modal */
+.scrim{position:fixed;inset:0;background:rgba(2,4,10,.7);backdrop-filter:blur(4px);display:none;z-index:50;align-items:center;justify-content:center}
+.scrim.on{display:flex}
+.modal{width:620px;max-width:92vw;max-height:86vh;overflow-y:auto;background:linear-gradient(180deg,#0a0e1c,#070a14);border:1px solid var(--line-strong);border-radius:16px;padding:26px 28px}
+.modal h2{font-family:var(--display);letter-spacing:2px;font-size:18px;margin-bottom:6px}
+.modal h2 span{color:var(--cyan)}
+.modal ol{margin:14px 0 14px 20px;line-height:1.85;font-size:14px;color:var(--txt-dim)}
+.modal ol b{color:var(--txt)}
+.modal code{font-family:var(--mono);background:rgba(52,227,230,.1);color:var(--cyan);padding:2px 6px;border-radius:5px;font-size:12.5px}
+.modal .close{margin-top:14px;width:100%;padding:12px;border:1px solid var(--cyan);border-radius:10px;background:rgba(52,227,230,.12);color:var(--cyan);font-family:var(--display);font-weight:700;letter-spacing:1.5px}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);z-index:60;background:rgba(8,12,22,.95);border:1px solid var(--cyan);color:var(--cyan);font-family:var(--display);font-weight:700;letter-spacing:2px;font-size:13px;padding:11px 22px;border-radius:10px;opacity:0;transition:.25s}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="c-top">
+    <div class="c-brand">
+      <svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#0b1326" stroke="#34e3e6" stroke-width="3"/><path d="M50 18 C58 30 58 52 50 78 C42 52 42 30 50 18Z" fill="#eaf1fb"/><path d="M50 78 C46 70 46 64 50 58 C54 64 54 70 50 78Z" fill="#ff8a3d"/><circle cx="50" cy="38" r="3.5" fill="#34e3e6"/></svg>
+      ORBITAL <span data-i18n="c_title">MISSION&nbsp;CONTROL</span>
+    </div>
+    <div class="c-mini"><span class="lab">T</span><span id="c-clock">−00:00:00</span></div>
+    <div class="c-status standby" id="c-status"><span class="d"></span><span id="c-status-t">STANDBY</span></div>
+    <div class="spacer"></div>
+    <div class="seg" id="lang-seg"><button id="lang-en">EN</button><button id="lang-zh">中文</button></div>
+    <button class="hbtn" id="btn-help" data-i18n="c_obs_setup">⛭ OBS SETUP</button>
+  </header>
+
+  <div class="c-body">
+    <!-- LEFT: preview + transport + sources -->
+    <section class="c-left">
+      <div class="monitor-wrap">
+        <div class="monitor-cap">
+          <div class="t"><span data-i18n="c_monitor">PROGRAM MONITOR</span> · <b>1920×1080</b></div>
+          <div class="legend" data-i18n="c_monitor_legend">overlays composite over your captured feed</div>
+        </div>
+        <div class="monitor" id="monitor">
+          <div class="stage1080" id="stage1080">
+            <div class="feed-note">▶ <span data-i18n="c_feed_note">YOUR VIDEO FEED</span><small data-i18n="c_feed_sub">captured separately in OBS — overlays sit on top</small></div>
+            <iframe class="ov" id="ov-title"     src="titlebar.html"  scrolling="no" style="left:0;top:0;width:1920px;height:80px"></iframe>
+            <iframe class="ov" id="ov-countdown" src="countdown.html" scrolling="no" style="left:680px;top:86px;width:560px;height:170px"></iframe>
+            <iframe class="ov" id="ov-weather"   src="weather.html"   scrolling="no" style="left:24px;top:540px;width:300px;height:330px"></iframe>
+            <iframe class="ov" id="ov-rocket"    src="rocket.html"    scrolling="no" style="left:1576px;top:300px;width:320px;height:640px"></iframe>
+            <iframe class="ov" id="ov-timeline"  src="timeline.html"  scrolling="no" style="left:0;top:988px;width:1920px;height:92px"></iframe>
+            <iframe class="ov" id="ov-ticker"    src="ticker.html"    scrolling="no" style="left:0;top:1016px;width:1920px;height:64px"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div class="transport">
+        <div class="cg"><span class="gl" data-i18n="c_seq">SEQ</span>
+          <button class="btn go" id="btn-start" data-i18n="c_start">START COUNT</button>
+          <button class="btn hold" id="btn-hold">HOLD</button>
+        </div>
+        <div class="divider"></div>
+        <div class="cg"><span class="gl" data-i18n="c_sett">SET T−</span>
+          <button class="preset" data-t="600">10:00</button>
+          <button class="preset" data-t="120">02:00</button>
+          <button class="preset" data-t="10">00:10</button>
+          <button class="preset" data-t="0" data-i18n="c_liftoff">LIFTOFF</button>
+          <input id="set-input" data-i18n-ph="ph_mmss" placeholder="mm:ss" style="width:78px;padding:7px 8px;border-radius:7px" />
+          <button class="btn sm" id="btn-set" data-i18n="c_set">SET</button>
+        </div>
+        <div class="divider"></div>
+        <div class="cg"><span class="gl" data-i18n="c_bottom">BOTTOM</span>
+          <div class="seg"><button id="seg-tl" class="on" data-i18n="c_timeline">TIMELINE</button><button id="seg-tk" data-i18n="c_ticker">TICKER</button></div>
+          <label class="sw" title="Semi-transparent band background" style="margin-left:8px"><input type="checkbox" id="en-clear"><span></span></label>
+          <span class="gl" data-i18n="c_clear">CLEAR</span>
+        </div>
+      </div>
+
+      <div class="sources">
+        <h3 data-i18n="c_sources">OBS BROWSER SOURCES</h3>
+        <div class="src-grid" id="src-grid"></div>
+      </div>
+    </section>
+
+    <!-- RIGHT: config -->
+    <aside class="c-right">
+      <div class="sec" data-i18n="sec_t0">Liftoff · T‑0</div>
+      <div class="field"><label data-i18n="f_t0utc">Set T‑0 as a UTC date / time</label><input type="datetime-local" id="f-t0utc" step="1" /></div>
+      <button class="btn sm primary" id="btn-t0utc" style="width:100%;padding:9px" data-i18n="c_sett0utc">SET T‑0 (UTC)</button>
+      <div class="hint" id="t0-readout">T‑0: not set</div>
+
+      <div class="sec" data-i18n="sec_site_wx">Launch Site &amp; Weather</div>
+      <div class="field"><label data-i18n="f_site">Launch Site</label><select id="f-site"></select></div>
+      <button class="btn sm" id="btn-wx" style="width:100%;padding:9px" data-i18n="c_refresh_wx">↻ REFRESH LIVE WEATHER</button>
+
+      <div class="sec" data-i18n="sec_broadcast">Broadcast</div>
+      <div class="frow">
+        <div class="field"><label data-i18n="f_mission">Mission</label><input id="f-mission" /></div>
+        <div class="field"><label data-i18n="f_vehicle">Vehicle</label><input id="f-vehicle" /></div>
+      </div>
+
+      <div class="sec" data-i18n="sec_vspec">Vehicle Spec</div>
+      <div class="tpl-bar">
+        <select id="tpl-select" title="Built-in vehicle presets"></select>
+        <button class="btn sm" id="tpl-load" data-i18n="c_loadpreset">LOAD PRESET</button>
+      </div>
+      <div class="tpl-bar">
+        <button class="btn sm primary" id="prof-save" style="flex:1" data-i18n="c_saveprofile">⤓ SAVE PROFILE</button>
+        <button class="btn sm" id="prof-load" style="flex:1" data-i18n="c_loadprofile">⤒ LOAD PROFILE</button>
+      </div>
+      <div class="hint" data-i18n="c_profile_hint">A profile is one .json file with the rocket spec and the flight timeline — easy to reload or share.</div>
+      <div class="frow"><div class="field"><label data-i18n="f_name">Name</label><input id="f-name" /></div><div class="field"><label data-i18n="f_operator">Operator</label><input id="f-operator" /></div></div>
+      <div class="frow"><div class="field"><label data-i18n="f_height">Height</label><input id="f-height" /></div><div class="field"><label data-i18n="f_diameter">Diameter</label><input id="f-diameter" /></div></div>
+      <div class="frow"><div class="field"><label data-i18n="f_mass">Liftoff Mass</label><input id="f-mass" /></div><div class="field"><label data-i18n="f_payload">Capacity (LEO)</label><input id="f-payload" /></div></div>
+
+      <div class="sec-opt off" id="sec-p"><span data-i18n="sec_payload">Payload</span> <span class="ln"></span><label class="sw"><input type="checkbox" id="en-p"><span></span></label></div>
+      <div class="opt-fields hidden" id="fields-p">
+        <div class="frow"><div class="field"><label data-i18n="p_name">Name</label><input id="f-pName" /></div><div class="field"><label data-i18n="p_customer">Customer</label><input id="f-pCustomer" /></div></div>
+        <div class="field"><label data-i18n="p_type">Type</label><input id="f-pType" /></div>
+        <div class="frow"><div class="field"><label data-i18n="p_mass">Mass</label><input id="f-pMass" /></div><div class="field"><label data-i18n="p_orbit">Target Orbit</label><input id="f-pOrbit" /></div></div>
+      </div>
+
+      <div class="sec-opt off" id="sec-b"><span data-i18n="sec_boosters">Boosters</span> <span class="ln"></span><label class="sw"><input type="checkbox" id="en-b"><span></span></label></div>
+      <div class="opt-fields hidden" id="fields-b">
+        <div class="field"><label data-i18n="f_motors">Motors</label><input id="f-bEng" data-i18n-ph="ph_boosters" placeholder="e.g. 4 × GEM-63" /></div>
+        <div class="frow"><div class="field"><label data-i18n="f_thrust">Thrust</label><input id="f-bThrust" /></div><div class="field"><label data-i18n="f_burn">Burn Time</label><input id="f-bBurn" /></div></div>
+      </div>
+
+      <div class="sec" data-i18n="sec_s1">First Stage</div>
+      <div class="field"><label data-i18n="f_engines">Engines</label><input id="f-s1eng" /></div>
+      <div class="frow"><div class="field"><label data-i18n="f_thrust">Thrust</label><input id="f-s1thrust" /></div><div class="field"><label data-i18n="f_burn">Burn Time</label><input id="f-s1burn" /></div></div>
+      <div class="field"><label data-i18n="f_prop">Propellant</label><input id="f-s1prop" /></div>
+
+      <div class="sec" data-i18n="sec_s2">Second Stage</div>
+      <div class="field"><label data-i18n="f_engine">Engine</label><input id="f-s2eng" /></div>
+      <div class="frow"><div class="field"><label data-i18n="f_thrust">Thrust</label><input id="f-s2thrust" /></div><div class="field"><label data-i18n="f_burn">Burn Time</label><input id="f-s2burn" /></div></div>
+      <div class="field"><label data-i18n="f_fairing">Fairing</label><input id="f-fairing" /></div>
+
+      <div class="sec-opt off" id="sec-s3"><span data-i18n="sec_s3">Third Stage</span> <span class="ln"></span><label class="sw"><input type="checkbox" id="en-s3"><span></span></label></div>
+      <div class="opt-fields hidden" id="fields-s3">
+        <div class="field"><label data-i18n="f_engine">Engine</label><input id="f-s3eng" /></div>
+        <div class="frow"><div class="field"><label data-i18n="f_thrust">Thrust</label><input id="f-s3thrust" /></div><div class="field"><label data-i18n="f_burn">Burn Time</label><input id="f-s3burn" /></div></div>
+      </div>
+
+      <div class="sec-opt off" id="sec-us"><span data-i18n="sec_us">Upper Stage</span> <span class="ln"></span><label class="sw"><input type="checkbox" id="en-us"><span></span></label></div>
+      <div class="opt-fields hidden" id="fields-us">
+        <div class="field"><label data-i18n="f_engine">Engine</label><input id="f-usEng" data-i18n-ph="ph_upper" placeholder="e.g. kick stage / Centaur" /></div>
+        <div class="frow"><div class="field"><label data-i18n="f_thrust">Thrust</label><input id="f-usThrust" /></div><div class="field"><label data-i18n="f_burn">Burn Time</label><input id="f-usBurn" /></div></div>
+      </div>
+
+      <div class="sec" data-i18n="sec_ftimeline">Flight Timeline</div>
+      <div class="hint" data-i18n="c_timeline_hint">Time accepts T+02:35, -1:00, or 145 (seconds). ★ marks a major milestone. Events drive the moving timeline &amp; the “next event” callouts.</div>
+      <div class="ev-editor" id="ev-editor"></div>
+      <button class="add-ev" id="add-ev" data-i18n="c_addevent">+ ADD EVENT</button>
+
+      <div class="foot-row">
+        <button class="btn nogo" id="btn-reset" data-i18n="c_reset">RESET ALL</button>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- help -->
+<div class="scrim" id="scrim">
+  <div class="modal">
+    <h2 data-i18n="h_title">OBS SETUP</h2>
+    <p class="hint" data-i18n="h_intro">This control panel runs the show. Each overlay is its own transparent page you add to OBS as a Browser Source — they all sync to whatever you do here.</p>
+    <ol>
+      <li data-i18n="h_li1">In OBS: + → Browser for each source. Tick “Local file” (or paste the served URL) and set the listed size.</li>
+      <li data-i18n="h_li2">Position &amp; scale each source on your canvas — the Program Monitor here shows the reference layout.</li>
+      <li data-i18n="h_li3">Add your video capture (window / display / camera) as the bottom layer so overlays sit on top.</li>
+      <li data-i18n="h_li4">Keep this page open (it can be its own dock / window). Every control here updates all sources instantly.</li>
+      <li data-i18n="h_li5">Use TIMELINE or TICKER for the lower band — enable the matching OBS source.</li>
+    </ol>
+    <p class="hint" data-i18n="h_sync">Sync uses the browser’s shared storage on this machine. For best reliability serve the folder over a local URL and use that URL for every source + this panel.</p>
+    <button class="close" id="help-close" data-i18n="h_gotit">GOT IT</button>
+  </div>
+</div>
+
+<input type="file" id="profile-file" accept=".json,application/json" style="display:none" />
+<div class="toast" id="toast"></div>
+
+<script src="common.js"></script>
+<script>
+let state = readState();
+
+const SOURCES=[
+  {f:'titlebar.html', nk:'src_titlebar',  size:'1920 × 80',     pk:'pos_top'},
+  {f:'countdown.html',nk:'src_countdown', size:'560 × 170',     pk:'pos_topcenter'},
+  {f:'weather.html',  nk:'src_weather',   size:'300 × 330',     pk:'pos_lowerleft'},
+  {f:'rocket.html',   nk:'src_rocket',    size:'320 × 460–720', pk:'pos_right'},
+  {f:'timeline.html', nk:'src_timeline',  size:'1920 × 92',     pk:'pos_bottom'},
+  {f:'ticker.html',   nk:'src_ticker',    size:'1920 × 64',     pk:'pos_bottom_alt'},
+];
+
+/* ---- built-in vehicle presets (spec only) ---- */
+const BUILTIN_TEMPLATES=[
+  {name:'Falcon 9 Block 5', rocket:{name:'Falcon 9 Block 5',operator:'SPACEX',height:'70 m',diameter:'3.7 m',mass:'549,054 kg',payload:'22,800 kg (LEO)',s1eng:'9 × Merlin 1D',s1thrust:'7,607 kN (SL)',s1burn:'162 s',s1prop:'LOX / RP-1',s2eng:'1 × Merlin 1D Vac',s2thrust:'981 kN',s2burn:'397 s',fairing:'13.1 m × 5.2 m'}},
+  {name:'Long March 2F', rocket:{name:'Long March 2F',operator:'CASC',height:'62 m',diameter:'3.35 m',mass:'464,000 kg',payload:'8,400 kg (LEO)',hasB:true,bEng:'4 × YF-20B (strap-on)',bThrust:'2,962 kN',bBurn:'128 s',s1eng:'4 × YF-20B (core)',s1thrust:'2,962 kN (SL)',s1burn:'160 s',s1prop:'N₂O₄ / UDMH',s2eng:'1 × YF-24B',s2thrust:'742 kN',s2burn:'300 s',fairing:'LES tower · ⌀3.8 m'}},
+  {name:'Long March 5', rocket:{name:'Long March 5',operator:'CASC',height:'57 m',diameter:'5.0 m',mass:'869,000 kg',payload:'25,000 kg (LEO)',hasB:true,bEng:'4 × (2 × YF-100)',bThrust:'9,807 kN',bBurn:'173 s',s1eng:'2 × YF-77 (core)',s1thrust:'1,400 kN',s1burn:'475 s',s1prop:'LH₂/LOX · LOX/Kero',s2eng:'2 × YF-75D',s2thrust:'176 kN',s2burn:'700 s',fairing:'12.3 m × 5.2 m'}},
+  {name:'Electron', rocket:{name:'Electron',operator:'ROCKET LAB',height:'18 m',diameter:'1.2 m',mass:'13,000 kg',payload:'300 kg (LEO)',s1eng:'9 × Rutherford',s1thrust:'224 kN (SL)',s1burn:'154 s',s1prop:'LOX / RP-1',s2eng:'1 × Rutherford Vac',s2thrust:'25.8 kN',s2burn:'343 s',fairing:'2.5 m × 1.2 m',hasUS:true,usEng:'1 × Curie (kick)',usThrust:'0.12 kN',usBurn:'restartable'}},
+];
+function buildTemplateSelect(){
+  $('tpl-select').innerHTML=BUILTIN_TEMPLATES.map(t=>`<option value="${esc(t.name)}">${esc(t.name)}</option>`).join('');
+}
+$('tpl-load').onclick=()=>{
+  const t=BUILTIN_TEMPLATES.find(x=>x.name===$('tpl-select').value); if(!t) return;
+  state.rocket=Object.assign({}, t.rocket);
+  state.vehicle=(t.rocket.name||state.vehicle).toUpperCase();
+  commit(); fillForms(); toast('PRESET LOADED');
+};
+
+/* ---- profile files (rocket spec + flight timeline, portable) ---- */
+const safeName = s => (String(s||'profile').trim().replace(/[^\w.-]+/g,'_').slice(0,60) || 'profile');
+$('prof-save').onclick=()=>{
+  const data={ type:'orbital-profile', version:1, name:state.rocket.name, mission:state.mission, vehicle:state.vehicle,
+               rocket:Object.assign({},state.rocket), events:state.events.map(e=>({t:e.t,l:e.l,m:!!e.m})) };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=safeName(state.rocket.name)+'.orbital.json';
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  toast('PROFILE SAVED');
+};
+$('prof-load').onclick=()=>$('profile-file').click();
+$('profile-file').onchange=e=>{ const f=e.target.files[0]; if(f) loadProfileFile(f); e.target.value=''; };
+function loadProfileFile(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    let d; try{ d=JSON.parse(r.result); }catch(_){ toast('INVALID FILE'); return; }
+    if(!d || typeof d!=='object' || !d.rocket){ toast('NOT AN ORBITAL PROFILE'); return; }
+    state.rocket=Object.assign({}, d.rocket);
+    if(Array.isArray(d.events)) state.events=d.events.map(ev=>({t:Number(ev.t)||0, l:String(ev.l||''), m:!!ev.m}));
+    if(typeof d.mission==='string') state.mission=d.mission;
+    if(typeof d.vehicle==='string') state.vehicle=d.vehicle;
+    commit(); fillForms(); buildEventEditor();
+    toast('PROFILE LOADED · '+(d.rocket.name||'unnamed'));
+  };
+  r.onerror=()=>toast('READ ERROR');
+  r.readAsText(file);
+}
+
+/* ---- commit: write shared state, all overlays + preview update ---- */
+function commit(){ writeState(state); reflectT0(); }
+
+/* ---- UTC T-0 helpers ---- */
+const p2=n=>String(n).padStart(2,'0');
+function utcString(ms){ const d=new Date(ms); return `${d.getUTCFullYear()}-${p2(d.getUTCMonth()+1)}-${p2(d.getUTCDate())} ${p2(d.getUTCHours())}:${p2(d.getUTCMinutes())}:${p2(d.getUTCSeconds())} UTC`; }
+function epochToUTCLocalInput(ms){ const d=new Date(ms); return `${d.getUTCFullYear()}-${p2(d.getUTCMonth()+1)}-${p2(d.getUTCDate())}T${p2(d.getUTCHours())}:${p2(d.getUTCMinutes())}:${p2(d.getUTCSeconds())}`; }
+function parseUTCLocalInput(v){ const m=(v||'').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/); return m? Date.UTC(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)) : null; }
+function reflectT0(){
+  const t0=state.clock.t0, inp=$('f-t0utc'), out=$('t0-readout');
+  if(!out||!inp) return;
+  out.textContent = t0==null ? tr('t0_notset',state.lang) : tr('t0_prefix',state.lang)+utcString(t0);
+  if(t0!=null && document.activeElement!==inp) inp.value=epochToUTCLocalInput(t0);
+}
+
+/* ---- preview scaling ---- */
+function updateScale(){ const m=$('monitor'); const s=m.clientWidth/1920; $('stage1080').style.transform=`scale(${s})`; }
+new ResizeObserver(updateScale).observe(document.getElementById('monitor'));
+window.addEventListener('resize',updateScale);
+
+/* ---- header live clock ---- */
+function tickHeader(){
+  const t=currentT(state.clock);
+  $('c-clock').textContent = (t==null?'−00:00:00':(t<=0?'−':'+')+fmt(t).str);
+  const si=statusInfo(state.clock); $('c-status').className='c-status '+si.cls; $('c-status-t').textContent=tr(si.key,state.lang);
+  requestAnimationFrame(tickHeader);
+}
+
+/* ---- weather ---- */
+function refreshWeather(){ fetchWeather(state.site).then(w=>{ state.weather=w; commit(); }); }
+
+/* ---- sequence controls ---- */
+$('btn-start').onclick=()=>{ if(state.clock.mode==='counting'||state.clock.mode==='hold') return; state.clock=clkSetCountdown(600); commit(); syncStartLabel(); };
+$('btn-hold').onclick=()=>{ if(state.clock.mode==='idle'||state.clock.t0==null) return; state.clock = state.clock.mode==='hold'?clkResume(state.clock):clkHold(state.clock); commit(); syncStartLabel(); };
+document.querySelectorAll('.preset').forEach(b=>b.onclick=()=>{ const t=+b.dataset.t; state.clock=clkSetCountdown(t===0?0.0001:t); commit(); syncStartLabel(); });
+$('btn-set').onclick=()=>{ const v=$('set-input').value.trim(); if(!v) return; state.clock=clkSetCountdown(Math.abs(parseT(v))); commit(); syncStartLabel(); };
+$('set-input').addEventListener('keydown',e=>{ if(e.key==='Enter') $('btn-set').click(); });
+function syncStartLabel(){
+  const m=state.clock.mode, active=(m==='counting'||m==='hold'), holding=(m==='hold');
+  $('btn-start').classList.toggle('disabled', active);
+  const h=$('btn-hold');
+  h.classList.toggle('disabled', !active);
+  h.textContent = tr(holding?'c_resume':'c_hold', state.lang);
+  h.classList.toggle('go', holding);
+  h.classList.toggle('hold', !holding);
+}
+setInterval(syncStartLabel,400);
+
+/* ---- language ---- */
+function setLang(lang){
+  state.lang=lang; commit();
+  applyI18n(document, lang);
+  buildSources(); buildTemplateSelect(); reflectT0(); syncStartLabel();
+  $('lang-en').classList.toggle('on', lang==='en');
+  $('lang-zh').classList.toggle('on', lang==='zh');
+}
+$('lang-en').onclick=()=>setLang('en');
+$('lang-zh').onclick=()=>setLang('zh');
+
+/* ---- bottom view toggle ---- */
+function setBottom(v){ state.bottomView=v; $('seg-tl').classList.toggle('on',v==='timeline'); $('seg-tk').classList.toggle('on',v==='ticker'); $('ov-timeline').classList.toggle('hidden',v!=='timeline'); $('ov-ticker').classList.toggle('hidden',v!=='ticker'); commit(); }
+$('seg-tl').onclick=()=>setBottom('timeline');
+$('seg-tk').onclick=()=>setBottom('ticker');
+$('en-clear').onchange=()=>{ state.tlClear=$('en-clear').checked; commit(); };
+
+/* ---- UTC T-0 setter ---- */
+$('btn-t0utc').onclick=()=>{ const e=parseUTCLocalInput($('f-t0utc').value); if(e==null){ toast('ENTER A VALID DATE/TIME'); return; } state.clock=clkSetT0(e); commit(); syncStartLabel(); toast('T‑0 SET · '+utcString(e)); };
+$('f-t0utc').addEventListener('keydown',ev=>{ if(ev.key==='Enter') $('btn-t0utc').click(); });
+
+/* ---- forms ---- */
+function buildSiteSelect(){ const sel=$('f-site'); sel.innerHTML=Object.entries(SITES).map(([k,v])=>`<option value="${k}">${v.name} — ${v.region}</option>`).join(''); sel.value=state.site; sel.onchange=()=>{ state.site=sel.value; commit(); refreshWeather(); }; }
+$('btn-wx').onclick=refreshWeather;
+
+const TXT=['mission','vehicle'];
+const RKT=['name','operator','height','diameter','mass','payload','pName','pCustomer','pType','pMass','pOrbit','bEng','bThrust','bBurn','s1eng','s1thrust','s1burn','s1prop','s2eng','s2thrust','s2burn','fairing','s3eng','s3thrust','s3burn','usEng','usThrust','usBurn'];
+const OPT=[{flag:'hasP',en:'en-p',fields:'fields-p',sec:'sec-p'},{flag:'hasB',en:'en-b',fields:'fields-b',sec:'sec-b'},{flag:'hasS3',en:'en-s3',fields:'fields-s3',sec:'sec-s3'},{flag:'hasUS',en:'en-us',fields:'fields-us',sec:'sec-us'}];
+function fillForms(){
+  TXT.forEach(k=>$('f-'+k).value=state[k]??'');
+  RKT.forEach(k=>$('f-'+k).value=state.rocket[k]??'');
+  syncOptUI();
+}
+function syncOptUI(){ OPT.forEach(o=>{ const on=!!state.rocket[o.flag]; $(o.en).checked=on; $(o.fields).classList.toggle('hidden',!on); $(o.sec).classList.toggle('off',!on); }); }
+function bindForms(){
+  TXT.forEach(k=>$('f-'+k).addEventListener('input',()=>{ state[k]=$('f-'+k).value; commit(); }));
+  RKT.forEach(k=>$('f-'+k).addEventListener('input',()=>{ state.rocket[k]=$('f-'+k).value; commit(); }));
+  OPT.forEach(o=>$(o.en).addEventListener('change',()=>{ state.rocket[o.flag]=$(o.en).checked; syncOptUI(); commit(); }));
+}
+
+/* ---- timeline editor ---- */
+function buildEventEditor(){
+  const wrap=$('ev-editor'); wrap.innerHTML='';
+  const evs=[...state.events].sort((a,b)=>a.t-b.t);
+  // keep state.events sorted so references stay valid
+  state.events=evs;
+  evs.forEach(ev=>{
+    const r=document.createElement('div'); r.className='ev-row';
+    r.innerHTML=`<input class="et" value="${fmt(ev.t).full}" /><input class="el" value="${ev.l}" placeholder="Event name" /><button class="ic star">${ev.m?'★':'☆'}</button><button class="ic del">✕</button>`;
+    const et=r.querySelector('.et'), el=r.querySelector('.el'), star=r.querySelector('.star'), del=r.querySelector('.del');
+    et.addEventListener('change',()=>{ ev.t=parseT(et.value); state.events.sort((a,b)=>a.t-b.t); commit(); buildEventEditor(); });
+    el.addEventListener('input',()=>{ ev.l=el.value; commit(); });
+    star.onclick=()=>{ ev.m=!ev.m; star.textContent=ev.m?'★':'☆'; commit(); };
+    del.onclick=()=>{ state.events.splice(state.events.indexOf(ev),1); commit(); buildEventEditor(); };
+    wrap.appendChild(r);
+  });
+}
+$('add-ev').onclick=()=>{ state.events.push({t:0,l:'New Event',m:false}); commit(); buildEventEditor(); };
+
+/* ---- reset ---- */
+$('btn-reset').onclick=()=>{ if(confirm('Reset ALL mission data to defaults?')){ const lang=state.lang; state=defaultState(); state.lang=lang; state.clock=clkSetCountdown(600); commit(); buildSiteSelect(); fillForms(); buildEventEditor(); buildTemplateSelect(); setBottom('timeline'); applyI18n(document,lang); buildSources(); refreshWeather(); toast('RESET'); } };
+
+/* ---- sources ---- */
+function buildSources(){
+  const base=location.href.replace(/[^/]*$/,''), L=state.lang;
+  $('src-grid').innerHTML=SOURCES.map(s=>`<div class="src"><div class="n">${esc(tr(s.nk,L))}</div><div class="meta">${s.size} · ${esc(tr(s.pk,L))}</div><div class="url" title="${base+s.f}">${base+s.f}</div><button class="cp" data-u="${base+s.f}">${esc(tr('c_copy',L))}</button></div>`).join('');
+  document.querySelectorAll('.cp').forEach(b=>b.onclick=()=>{ navigator.clipboard?.writeText(b.dataset.u).then(()=>toast('URL COPIED')).catch(()=>toast(b.dataset.u)); });
+}
+
+/* ---- help + toast ---- */
+$('btn-help').onclick=()=>$('scrim').classList.add('on');
+$('help-close').onclick=()=>$('scrim').classList.remove('on');
+$('scrim').onclick=e=>{ if(e.target===$('scrim')) $('scrim').classList.remove('on'); };
+let toastTO; function toast(t){ const el=$('toast'); el.textContent=t; el.classList.add('show'); clearTimeout(toastTO); toastTO=setTimeout(()=>el.classList.remove('show'),1500); }
+
+/* keyboard */
+window.addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return; if(e.code==='Space'){ e.preventDefault(); $('btn-hold').click(); } if(e.key==='t'||e.key==='T'){ setBottom(state.bottomView==='timeline'?'ticker':'timeline'); } if(e.key==='Escape') $('scrim').classList.remove('on'); });
+
+/* ---- init ---- */
+function init(){
+  if(state.clock.mode==='idle') state.clock=clkSetCountdown(600); // looks live on first open
+  buildSiteSelect(); fillForms(); bindForms(); buildEventEditor(); buildSources(); buildTemplateSelect();
+  $('en-clear').checked=!!state.tlClear;
+  applyI18n(document, state.lang);
+  $('lang-en').classList.toggle('on', state.lang!=='zh'); $('lang-zh').classList.toggle('on', state.lang==='zh');
+  setBottom(state.bottomView||'timeline');
+  commit();                 // push initial state to all overlays
+  refreshWeather();
+  setInterval(refreshWeather,120000);
+  syncStartLabel(); updateScale(); tickHeader();
+}
+init();
+</script>
+</body>
+</html>
