@@ -18,11 +18,13 @@
 </div>
 <script src="common.js"></script>
 <script>
-const row=(k,v,hl)=>`<div class="ri-row"><span class="k">${esc(k)}</span><span class="v ${hl?'hl':''}">${esc(v)||'—'}</span></div>`;
-const section=(title,rows)=>`<div class="ri-section"><div class="ri-sh">${title}</div>${rows}</div>`;
+// empty fields are omitted entirely (don't render a row with a placeholder)
+const row=(k,v,hl)=>{ v=(v==null?'':String(v)).trim(); return v?`<div class="ri-row"><span class="k">${esc(k)}</span><span class="v ${hl?'hl':''}">${esc(v)}</span></div>`:''; };
+// a section with no filled rows is dropped too (no orphan header)
+const section=(title,rows)=>rows?`<div class="ri-section"><div class="ri-sh">${title}</div>${rows}</div>`:'';
 function render(state){
   const r=state.rocket, L=state.lang, T=k=>tr(k,L);
-  $('ri-name').textContent=r.name; $('ri-op').textContent=r.operator;
+  $('ri-name').textContent=r.name||''; const op=$('ri-op'); op.textContent=r.operator||''; op.style.display=(r.operator&&String(r.operator).trim())?'':'none';
   let html=section(T('sec_vehicle'), row(T('r_height'),r.height)+row(T('r_diameter'),r.diameter)+row(T('r_mass'),r.mass,true)+row(T('r_payload'),r.payload,true));
   if(r.hasP) html+=section(T('sec_payload'), row(T('p_name'),r.pName,true)+row(T('p_customer'),r.pCustomer)+row(T('p_type'),r.pType)+row(T('p_mass'),r.pMass)+row(T('p_orbit'),r.pOrbit,true));
   if(r.hasB) html+=section(T('sec_boosters'), row(T('r_motors'),r.bEng,true)+row(T('r_thrust'),r.bThrust)+row(T('r_burn'),r.bBurn));
