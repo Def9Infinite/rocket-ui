@@ -105,6 +105,9 @@ body.clean .top,body.clean .evlog{opacity:0;transition:opacity .3s}
   <span class="gl2">ALT</span><input type="number" id="iAlt" min="120" max="40000" /><span class="gl2">km</span>
   <span class="gl2">INC</span><input type="number" id="iInc" min="0" max="120" step="0.1" /><span class="gl2">°</span>
   <button id="applyOrbit" data-i18n="tj_set">SET</button>
+  <div class="divider"></div>
+  <span class="gl2" data-i18n="tj_heading">HEADING</span>
+  <button id="btn-hdg">▲ N</button>
 </div>
 
 <script src="common.js"></script>
@@ -156,7 +159,7 @@ let gl=null, glProg=null, glTex=null, glU={};
 const VS=`attribute vec2 p; void main(){ gl_Position=vec4(p,0.0,1.0); }`;
 const FS=`precision highp float;
 uniform vec2 u_res; uniform vec2 u_center; uniform float u_Rpx;
-uniform vec3 u_r,u_u,u_f; uniform sampler2D u_tex;
+uniform vec3 u_r,u_u,u_f; uniform sampler2D u_tex; uniform vec3 u_sun;
 const float PI=3.14159265359;
 float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
 void main(){
@@ -174,6 +177,12 @@ void main(){
   float lat=asin(clamp(d.z,-1.0,1.0)), lon=atan(d.y,d.x);
   vec2 uv=vec2((lon+PI)/(2.0*PI),(PI*0.5-lat)/PI);
   vec3 col=texture2D(u_tex,uv).rgb;
+  float ndl=dot(d,u_sun);                              // solar illumination
+  float day=smoothstep(-0.10,0.12,ndl);               // smooth terminator
+  vec3 night=col*vec3(0.34,0.40,0.52);                // dim, cool night side
+  col=mix(night,col,day);
+  float twi=exp(-pow(ndl/0.10,2.0));                  // glow at the terminator
+  col+=vec3(0.16,0.09,0.04)*twi*nz*0.8;               // warm dusk band
   col*=0.45+0.55*nz;                                   // limb darkening
   col+=vec3(0.05,0.09,0.16)*smoothstep(0.82,1.0,sqrt(rho2))*nz;  // atmosphere rim
   gl_FragColor=vec4(col,1.0);
@@ -184,7 +193,7 @@ function initGL(){
   const prog=gl.createProgram(); gl.attachShader(prog,compile(gl.VERTEX_SHADER,VS)); gl.attachShader(prog,compile(gl.FRAGMENT_SHADER,FS)); gl.linkProgram(prog); gl.useProgram(prog); glProg=prog;
   const buf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,buf); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
   const pl=gl.getAttribLocation(prog,'p'); gl.enableVertexAttribArray(pl); gl.vertexAttribPointer(pl,2,gl.FLOAT,false,0,0);
-  for(const u of ['u_res','u_center','u_Rpx','u_r','u_u','u_f','u_tex']) glU[u]=gl.getUniformLocation(prog,u);
+  for(const u of ['u_res','u_center','u_Rpx','u_r','u_u','u_f','u_tex','u_sun']) glU[u]=gl.getUniformLocation(prog,u);
   // texture: rasterize land at the largest supported size
   const maxT=Math.min(8192, gl.getParameter(gl.MAX_TEXTURE_SIZE));
   buildTexture(window._RINGS, maxT);
@@ -202,6 +211,8 @@ function renderGlobe(){
   if(!gl) return;
   gl.uniform2f(glU.u_res,W*DPR,H*DPR); gl.uniform2f(glU.u_center,cx*DPR,cy*DPR); gl.uniform1f(glU.u_Rpx,view.Rpx*DPR);
   gl.uniform3f(glU.u_r,B.r[0],B.r[1],B.r[2]); gl.uniform3f(glU.u_u,B.u[0],B.u[1],B.u[2]); gl.uniform3f(glU.u_f,B.f[0],B.f[1],B.f[2]);
+  const sv=sunVector(state&&state.clock&&state.clock.t0?new Date(state.clock.t0):new Date());
+  gl.uniform3f(glU.u_sun,sv[0],sv[1],sv[2]);
   gl.drawArrays(gl.TRIANGLES,0,3);
 }
 
@@ -209,6 +220,18 @@ function renderGlobe(){
 let view={lat:0,lon:0,Rpx:600}, B={f:[0,0,1],u:[0,1,0],r:[1,0,0]};
 function basisOf(latc,lonc){ const cl=Math.cos(latc),sl=Math.sin(latc),co=Math.cos(lonc),so=Math.sin(lonc); return {f:[cl*co,cl*so,sl], u:[-sl*co,-sl*so,cl], r:[-so,co,0]}; }
 function llaToVec(lat,lon,alt){ const rad=R_E+(alt||0), cl=Math.cos(lat); return [rad*cl*Math.cos(lon), rad*cl*Math.sin(lon), rad*Math.sin(lat)]; }
+function sunVector(date){
+  const d=date||new Date();
+  const start=Date.UTC(d.getUTCFullYear(),0,0);
+  const dayOfYear=(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-start)/86400000;
+  const hUTC=d.getUTCHours()+d.getUTCMinutes()/60+d.getUTCSeconds()/3600;
+  const g=2*Math.PI/365*(dayOfYear-1+(hUTC-12)/24);                    // fractional year (rad)
+  const decl=0.006918-0.399912*Math.cos(g)+0.070257*Math.sin(g)-0.006758*Math.cos(2*g)+0.000907*Math.sin(2*g)-0.002697*Math.cos(3*g)+0.00148*Math.sin(3*g); // declination (rad)
+  const eqt=229.18*(0.000075+0.001868*Math.cos(g)-0.032077*Math.sin(g)-0.014615*Math.cos(2*g)-0.040849*Math.sin(2*g)); // equation of time (minutes)
+  const subLonDeg=-15*(hUTC-12+eqt/60);                                 // subsolar longitude, east-positive deg
+  const lon=subLonDeg*Math.PI/180, lat=decl;
+  return [Math.cos(lat)*Math.cos(lon), Math.cos(lat)*Math.sin(lon), Math.sin(lat)];
+}
 function project(P){ const sx=P[0]*B.r[0]+P[1]*B.r[1]+P[2]*B.r[2], sy=P[0]*B.u[0]+P[1]*B.u[1]+P[2]*B.u[2], sz=P[0]*B.f[0]+P[1]*B.f[1]+P[2]*B.f[2], k=view.Rpx/R_E; return {x:cx+sx*k, y:cy-sy*k, z:sz}; }
 const projLLA=(lat,lon,alt)=>project(llaToVec(lat,lon,alt));
 
@@ -221,7 +244,12 @@ function computeTrajectory(st){
   let incDeg=(o.inc!=null)?o.inc:Math.abs(site.lat);
   incDeg=clamp(incDeg, Math.abs(site.lat)+0.01, 180-Math.abs(site.lat)-0.01);
   const inc=incDeg*D2R, a=R_E+alt, n=Math.sqrt(MU/(a*a*a));
-  let u0=Math.asin(clamp(Math.sin(lat0)/Math.sin(inc),-1,1)); if(incDeg>90) u0=Math.PI-u0;
+  // Launch heading is independent of inclination: each plane has a north-going (ascending) and a
+  // south-going (descending) launch azimuth. launchNorth==null auto-picks the conventional default
+  // (prograde→NE/north, retrograde→SW/south); set true/false to force a heading (e.g. north-going
+  // retrograde from Andøya heads NW, between Greenland and Svalbard).
+  const north=(launchNorth==null)?(incDeg<=90):launchNorth;
+  let u0=Math.asin(clamp(Math.sin(lat0)/Math.sin(inc),-1,1)); if(!north) u0=Math.PI-u0;
   const lamFn=u=>Math.atan2(Math.cos(inc)*Math.sin(u),Math.cos(u)), lam0=lamFn(u0);
   const evs=[...st.events].sort((x,y)=>x.t-y.t);
   let tIns; const insEv=evs.find(e=>/seco|insert|orbit/i.test(e.l));
@@ -234,13 +262,13 @@ function computeTrajectory(st){
   const altOf=t=> t<=0?0 : (t>=tIns?alt: alt*ease(clamp(t/tIns*1.12,0,1)));
   const velOf=t=> t<=0?0 : (t>=tIns?vOrb: vOrb*Math.pow(t/tIns,1.25));
   const pos=t=>{ const u=u0+du(t); return {lat:Math.asin(Math.sin(inc)*Math.sin(u)), lon:lon0+(lamFn(u)-lam0)-OMEGA_E*Math.max(0,t), alt:altOf(t)}; };
-  return {site,lat0,lon0,inc,incDeg,alt,a,n,u0,lamFn,lam0,tIns,tPay,tEnd:tPay+45,tStart:-4,du,altOf,velOf,pos,vOrb,evs,majors:evs.filter(e=>e.m)};
+  return {site,lat0,lon0,inc,incDeg,north,alt,a,n,u0,lamFn,lam0,tIns,tPay,tEnd:tPay+45,tStart:-4,du,altOf,velOf,pos,vOrb,evs,majors:evs.filter(e=>e.m)};
 }
 function nodeLon(t){ return traj.lon0-traj.lam0-OMEGA_E*Math.max(0,t); }
 function orbitPoint(u,t){ const O=nodeLon(t),cI=Math.cos(traj.inc),sI=Math.sin(traj.inc),cO=Math.cos(O),sO=Math.sin(O),cu=Math.cos(u),su=Math.sin(u); return [traj.a*(cO*cu-cI*sO*su), traj.a*(sO*cu+cI*cO*su), traj.a*sI*su]; }
 
 /* ===================== animation ===================== */
-let simT=-4, playing=true, speedMult=1, lastTs=0, holdTimer=0;
+let simT=-4, playing=true, speedMult=1, lastTs=0, holdTimer=0, launchNorth=null;
 const rateAt=t=> t<0? 4/2.4 : (t<traj.tIns? traj.tIns/15 : (traj.tEnd-traj.tIns)/8);
 // slow-mo near each major milestone: ease the playback rate down to PACE_MIN on approach, back up after
 const PACE_MIN=0.25;
@@ -341,8 +369,10 @@ function rebuild(keepTime){
   const cls=/(geo|gto)/i.test(state.rocket.pOrbit||'')?'GTO':(traj.alt>2000?'MEO':(traj.alt>=160?'LEO':'sub-orbital'));
   $('ob-sub').textContent=traj.incDeg.toFixed(1)+'° · '+cls;
   $('iAlt').value=Math.round(traj.alt); $('iInc').value=traj.incDeg.toFixed(1);
+  setHeadingLabel();
   buildEvList(); lastFired=-1; if(!keepTime) simT=traj.tStart;
 }
+function setHeadingLabel(){ if(traj) $('btn-hdg').textContent=(traj.north?'▲ ':'▼ ')+tr(traj.north?'tj_north':'tj_south', state.lang); }
 function resize(){ DPR=Math.min(2,window.devicePixelRatio||1); W=innerWidth; H=innerHeight; cx=W/2; cy=H/2;
   glcv.width=W*DPR; glcv.height=H*DPR; if(gl) gl.viewport(0,0,glcv.width,glcv.height);
   cv.width=W*DPR; cv.height=H*DPR; cv.style.width=W+'px'; cv.style.height=H+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
@@ -353,12 +383,13 @@ $('restart').onclick=()=>{ simT=traj.tStart; holdTimer=0; lastFired=-1; playing=
 $('scrub').oninput=e=>{ simT=traj.tStart+(e.target.value/1000)*(traj.tEnd-traj.tStart); lastFired=-1; };
 document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ speedMult=+b.dataset.m; document.querySelectorAll('.spd').forEach(x=>x.classList.toggle('on',x===b)); });
 $('applyOrbit').onclick=()=>{ const al=parseFloat($('iAlt').value), inc=parseFloat($('iInc').value); state.rocket={...state.rocket, pOrbit:`${Math.round(al)} km × ${inc}° LEO`, hasP:true}; writeState(state); rebuild(true); };
+$('btn-hdg').onclick=()=>{ launchNorth = !(traj && traj.north); rebuild(true); };
 $('cleanBtn').onclick=()=>document.body.classList.toggle('clean');
 window.addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT')return; if(e.code==='Space'){e.preventDefault();$('play').click();} if(e.key==='r')$('restart').click(); if(e.key==='c')document.body.classList.toggle('clean'); });
 
 subscribe(s=>{ const rebuildNeeded=s.site!==state.site||s.rocket.pOrbit!==state.rocket.pOrbit||JSON.stringify(s.events)!==JSON.stringify(state.events)||!traj; const langChanged=s.lang!==state.lang; state=s;
   applyI18n(document,state.lang);
-  if(rebuildNeeded) rebuild(true); else if(langChanged){ buildEvList(); $('missionLine').innerHTML=`<b>${esc(state.mission)}</b> · ${esc(state.vehicle)} · ${esc(traj.site.name)}`; } });
+  if(rebuildNeeded) rebuild(true); else if(langChanged){ buildEvList(); setHeadingLabel(); $('missionLine').innerHTML=`<b>${esc(state.mission)}</b> · ${esc(state.vehicle)} · ${esc(traj.site.name)}`; } });
 
 /* boot */
 resize(); applyI18n(document,state.lang);

@@ -90,6 +90,7 @@ const I18N = {
     tj_title:'ASCENT TRAJECTORY', tj_alt:'Alt', tj_vel:'Velocity', tj_dr:'Downrange', tj_inc:'Inclination',
     tj_events:'KEY MILESTONES', tj_target:'TARGET ORBIT', tj_control:'◂ CONTROL', tj_clean:'◉ CLEAN',
     tj_pause:'⏸ PAUSE', tj_play:'▶ PLAY', tj_replay:'↺ REPLAY', tj_speed:'SPEED', tj_orbit:'ORBIT', tj_set:'SET', tj_loading:'LOADING MAP…',
+    tj_heading:'HEADING', tj_north:'NORTH', tj_south:'SOUTH',
     ph_prelaunch:'PRELAUNCH', ph_ascent:'POWERED ASCENT', ph_insertion:'ORBIT INSERTION', ph_onorbit:'ON ORBIT',
   },
   zh:{
@@ -141,6 +142,7 @@ const I18N = {
     tj_title:'上升轨迹', tj_alt:'高度', tj_vel:'速度', tj_dr:'射程', tj_inc:'轨道倾角',
     tj_events:'关键节点', tj_target:'目标轨道', tj_control:'◂ 控制台', tj_clean:'◉ 简洁',
     tj_pause:'⏸ 暂停', tj_play:'▶ 播放', tj_replay:'↺ 重播', tj_speed:'倍速', tj_orbit:'轨道', tj_set:'设置', tj_loading:'地图加载中…',
+    tj_heading:'发射方向', tj_north:'向北', tj_south:'向南',
     ph_prelaunch:'发射前', ph_ascent:'动力上升', ph_insertion:'入轨', ph_onorbit:'在轨飞行',
   },
 };

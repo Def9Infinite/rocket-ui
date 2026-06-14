@@ -32,11 +32,15 @@ high‑resolution (1:10m) coastline** so it stays crisp at any zoom — it: high
 **computed ascent ground track** (launch azimuth derived from the site latitude + target inclination — NE for
 a 53° LEO, *south* for a Vandenberg SSO), zooms out as simulated **T+** advances, fires your timeline events
 as callouts, and ends on a **globe view of the final orbit** (an inclined ring at the target altitude — the
-vehicle is genuinely in orbit by payload separation). The **major milestones (★) are marked directly on the
-ascent path** with dot + label + T+ time (just like the timeline), and the side list shows the major
-milestones only. Fully **localized (EN / 中文)** — it follows the control panel's language toggle. Orbit is
+vehicle is genuinely in orbit by payload separation). The globe also renders a **real‑time day/night
+terminator** (solar shading computed for the mission's T‑0 time — Arctic polar day in June, etc.). The
+**major milestones (★) are marked directly on the ascent path** with dot + label + T+ time (just like the
+timeline), and the side list shows the major milestones only. Fully **localized (EN / 中文)** — it follows the control panel's language toggle. Orbit is
 read from the payload's target‑orbit field; you can also override altitude/inclination in its bottom bar.
-Controls: play/pause, replay, scrub, speed, and `C` for a clean (UI‑hidden) output.
+The **HEADING** toggle flips the launch between north‑going and south‑going independently of inclination —
+so a retrograde orbit (i > 90°) can still launch *north* (e.g. from Andøya, a north‑west track threading
+between Greenland and Svalbard), not only south. Controls: play/pause, replay, scrub, speed, HEADING, and
+`C` for a clean (UI‑hidden) output.
 
 ## Quick start
 
