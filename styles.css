@@ -50,12 +50,16 @@ body{font-family:var(--sans);color:var(--txt);background:transparent;-webkit-fon
 @keyframes blink{0%,55%{opacity:1}70%,100%{opacity:.25}}
 .tb-spacer{flex:1}
 .status-pill{display:flex;align-items:center;gap:9px;padding:9px 17px;border-radius:10px;border:1px solid var(--line-strong);background:rgba(8,12,22,.62);backdrop-filter:blur(8px);font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:2px;transition:.3s}
-.status-pill .sdot{width:9px;height:9px;border-radius:50%;background:var(--hold);box-shadow:0 0 12px currentColor}
+.status-pill .sdot{width:9px;height:9px;border-radius:50%;background:currentColor;box-shadow:0 0 12px currentColor}
 .status-pill.go{border-color:rgba(55,245,160,.5);color:var(--go)}
 .status-pill.count{border-color:var(--line-strong);color:var(--cyan)}
 .status-pill.flight{border-color:rgba(74,140,255,.5);color:#9cc0ff}
 .status-pill.hold{border-color:rgba(255,194,77,.6);color:var(--hold)}
 .status-pill.standby{color:var(--txt-dim)}
+.status-pill.scrub{border-color:rgba(255,138,61,.55);color:var(--orange)}
+.status-pill.success{border-color:rgba(55,245,160,.55);color:var(--go)}
+.status-pill.destroyed{border-color:rgba(255,85,110,.6);color:var(--nogo)}
+.status-pill.destroyed .sdot{animation:blink 1.1s infinite}
 
 /* ==================== COUNTDOWN ==================== */
 .countdown{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;width:100%;text-align:center;padding:8px}

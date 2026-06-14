@@ -30,6 +30,7 @@ const I18N = {
   en:{
     // status
     st_standby:'STANDBY', st_tminus:'T-MINUS', st_hold:'HOLD', st_inflight:'IN FLIGHT',
+    st_auto:'AUTO', st_waiting:'STANDBY', st_newt0:'NEW T-0', st_scrub:'SCRUBBED', st_destroyed:'DESTROYED', st_success:'SUCCESS', st_flying:'IN FLIGHT', c_status:'STATUS',
     // titlebar
     mission:'MISSION', live:'LIVE',
     // countdown
@@ -51,7 +52,7 @@ const I18N = {
     tk_mass:'LIFTOFF MASS', tk_s1:'1ST STAGE', tk_thrust:'THRUST', tk_payload:'CAPACITY', tk_s2:'2ND STAGE',
     tk_phase:'PHASE', tk_next:'NEXT', tk_wind:'WIND', tk_temp:'TEMP', tk_wx:'WX',
     // control — chrome
-    c_title:'MISSION CONTROL', c_obs_setup:'⛭ OBS SETUP', c_monitor:'PROGRAM MONITOR',
+    c_title:'MISSION CONTROL', c_obs_setup:'⛭ OBS SETUP', c_trajectory:'🛰 TRAJECTORY', c_monitor:'PROGRAM MONITOR',
     c_monitor_legend:'overlays composite over your captured feed',
     c_feed_note:'YOUR VIDEO FEED', c_feed_sub:'captured separately in OBS — overlays sit on top',
     // control — transport
@@ -85,9 +86,15 @@ const I18N = {
     h_li5:'Use TIMELINE or TICKER for the lower band — enable the matching OBS source.',
     h_sync:'Live updates need the sync server: run  python3 server.py  in this folder, then use its http://localhost URL for every source AND this panel. (Plain http.server or “Local file” will NOT sync across OBS sources.)',
     h_gotit:'GOT IT',
+    // trajectory page
+    tj_title:'ASCENT TRAJECTORY', tj_alt:'Alt', tj_vel:'Velocity', tj_dr:'Downrange', tj_inc:'Inclination',
+    tj_events:'KEY MILESTONES', tj_target:'TARGET ORBIT', tj_control:'◂ CONTROL', tj_clean:'◉ CLEAN',
+    tj_pause:'⏸ PAUSE', tj_play:'▶ PLAY', tj_replay:'↺ REPLAY', tj_speed:'SPEED', tj_orbit:'ORBIT', tj_set:'SET', tj_loading:'LOADING MAP…',
+    ph_prelaunch:'PRELAUNCH', ph_ascent:'POWERED ASCENT', ph_insertion:'ORBIT INSERTION', ph_onorbit:'ON ORBIT',
   },
   zh:{
     st_standby:'待命', st_tminus:'倒计时', st_hold:'暂停', st_inflight:'飞行中',
+    st_auto:'自动', st_waiting:'待命', st_newt0:'重设T0', st_scrub:'推迟', st_destroyed:'飞行失利', st_success:'发射成功', st_flying:'飞行中', c_status:'状态',
     mission:'任务', live:'直播',
     countdown:'倒计时', count_held:'⚠ 倒计时暂停 ⚠',
     sub_await:'等待倒计时开始', sub_hold:'自动程序暂停 · 等待恢复',
@@ -103,7 +110,7 @@ const I18N = {
     tk_flightdata:'飞行数据', tk_vehicle:'火箭', tk_mission:'任务', tk_site:'发射场', tk_height:'高度',
     tk_mass:'起飞质量', tk_s1:'一级', tk_thrust:'推力', tk_payload:'运力', tk_s2:'二级',
     tk_phase:'阶段', tk_next:'下一步', tk_wind:'风速', tk_temp:'温度', tk_wx:'气象',
-    c_title:'任务控制', c_obs_setup:'⛭ OBS 设置', c_monitor:'节目监视器',
+    c_title:'任务控制', c_obs_setup:'⛭ OBS 设置', c_trajectory:'🛰 飞行轨迹', c_monitor:'节目监视器',
     c_monitor_legend:'叠加层合成于你采集的视频之上',
     c_feed_note:'你的视频画面', c_feed_sub:'在 OBS 中单独采集 — 叠加层位于其上',
     c_seq:'时序', c_start:'开始倒计时', c_hold:'暂停', c_resume:'恢复', c_sett:'设置 T−',
@@ -130,6 +137,11 @@ const I18N = {
     h_li5:'下方条带使用“时间轴”或“滚动条” — 启用对应的 OBS 源即可。',
     h_sync:'实时更新需要同步服务器：在该文件夹中运行  python3 server.py，然后对所有源和本面板使用它的 http://localhost 网址。（普通 http.server 或“本地文件”无法在 OBS 各源之间同步。）',
     h_gotit:'知道了',
+    // trajectory page
+    tj_title:'上升轨迹', tj_alt:'高度', tj_vel:'速度', tj_dr:'射程', tj_inc:'轨道倾角',
+    tj_events:'关键节点', tj_target:'目标轨道', tj_control:'◂ 控制台', tj_clean:'◉ 简洁',
+    tj_pause:'⏸ 暂停', tj_play:'▶ 播放', tj_replay:'↺ 重播', tj_speed:'倍速', tj_orbit:'轨道', tj_set:'设置', tj_loading:'地图加载中…',
+    ph_prelaunch:'发射前', ph_ascent:'动力上升', ph_insertion:'入轨', ph_onorbit:'在轨飞行',
   },
 };
 function tr(key, lang){ const L=I18N[lang]||I18N.en; return (L[key]!=null) ? L[key] : (I18N.en[key]!=null ? I18N.en[key] : key); }
@@ -159,6 +171,7 @@ function defaultState(){
     bottomView:'timeline',                    // 'timeline' | 'ticker'
     tlBg:'half',                              // bottom band background: 'solid' | 'half' | 'clear'
     lang:'en',                                // 'en' | 'zh'
+    status:'auto',                            // mission-status override: 'auto' follows the clock, else a STATUSES key
     clock:{mode:'idle', t0:null, holdT:null}, // mode: idle | counting | hold
     weather:null,
     rocket:{
@@ -254,6 +267,23 @@ function statusInfo(clock){
   if(t<0) return {cls:t>-600?'go':'count', key:'st_tminus'};
   return {cls:'flight', key:'st_inflight'};
 }
+/* selectable mission statuses ('auto' derives from the clock; the rest are manual overrides) */
+const STATUSES=[
+  {k:'auto',      i:'st_auto',      cls:''},          // follow the countdown clock (statusInfo)
+  {k:'waiting',   i:'st_waiting',   cls:'standby'},   // awaiting launch
+  {k:'hold',      i:'st_hold',      cls:'hold'},      // countdown hold
+  {k:'newt0',     i:'st_newt0',     cls:'count'},     // recycling to a new T-0
+  {k:'scrub',     i:'st_scrub',     cls:'scrub'},     // launch scrubbed
+  {k:'flying',    i:'st_flying',    cls:'flight'},    // in powered flight
+  {k:'success',   i:'st_success',   cls:'success'},   // mission success
+  {k:'destroyed', i:'st_destroyed', cls:'destroyed'}, // vehicle lost in flight
+];
+function resolveStatus(state){
+  const s=(state&&state.status)||'auto';
+  if(s==='auto') return statusInfo(state?state.clock:null);
+  const def=STATUSES.find(x=>x.k===s);
+  return def?{cls:def.cls, key:def.i}:statusInfo(state?state.clock:null);
+}
 function activePhase(state){
   const t=currentT(state.clock);
   if(t==null) return {now:null, next:null};   // now === null → prelaunch
@@ -320,6 +350,14 @@ const $ = id => document.getElementById(id);
 
 /* escape user-supplied text before it goes into innerHTML templates */
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* parse a payload orbit string like "550 km × 53° LEO" → {alt(km), inc(deg)} */
+function parseOrbit(str){
+  const s=String(str||'');
+  const am=s.match(/([\d,]+(?:\.\d+)?)\s*km/i);
+  const im=s.match(/([\d.]+)\s*(?:°|deg)/i);
+  return { alt: am? parseFloat(am[1].replace(/,/g,'')) : 500, inc: im? parseFloat(im[1]) : null };
+}
 
 /* ---------- DPI / supersampling ----------
    OBS Browser Sources render at devicePixelRatio 1, so when a source is scaled on the

@@ -32,9 +32,9 @@
 <script>
 let state=readState();
 function paint(){ $('t-mission').textContent=state.mission; $('t-vehicle').textContent=state.vehicle; applyI18n(document, state.lang); }
-function tickStatus(){ const si=statusInfo(state.clock); $('status-pill').className='status-pill '+si.cls; $('status-text').textContent=tr(si.key, state.lang); requestAnimationFrame(tickStatus); }
+function tickStatus(){ const si=resolveStatus(state); $('status-pill').className='status-pill '+si.cls; $('status-text').textContent=tr(si.key, state.lang); requestAnimationFrame(tickStatus); }
 subscribe(s=>{ state=s; paint(); });
-tickStatus();
+paint(); tickStatus();
 </script>
 </body>
 </html>

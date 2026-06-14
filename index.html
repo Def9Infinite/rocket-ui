@@ -22,7 +22,9 @@ body{background:radial-gradient(1200px 700px at 75% -10%,#101a33 0%,#080b16 45%,
 .c-mini #c-clock{font-size:18px;font-variant-numeric:tabular-nums;color:var(--cyan)}
 .c-status{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:2px;padding:7px 14px;border-radius:9px;border:1px solid var(--line-strong)}
 .c-status .d{width:8px;height:8px;border-radius:50%;background:currentColor;box-shadow:0 0 10px currentColor}
-.c-status.go{color:var(--go)}.c-status.flight{color:#9cc0ff}.c-status.hold{color:var(--hold)}.c-status.standby{color:var(--txt-dim)}.c-status.count{color:var(--cyan)}
+.c-status.go{color:var(--go)}.c-status.flight{color:#9cc0ff}.c-status.hold{color:var(--hold)}.c-status.standby{color:var(--txt-dim)}.c-status.count{color:var(--cyan)}.c-status.scrub{color:var(--orange)}.c-status.success{color:var(--go)}.c-status.destroyed{color:var(--nogo)}
+.statsel{padding:7px 9px;border-radius:8px;border:1px solid var(--line-strong);background:rgba(8,12,22,.7);color:var(--txt);font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:1px;cursor:pointer}
+.statsel:hover{border-color:var(--cyan-deep)}
 .spacer{flex:1}
 .hbtn{padding:9px 16px;border:1px solid var(--line-strong);border-radius:10px;background:rgba(52,227,230,.07);color:var(--cyan);font-family:var(--display);font-weight:700;font-size:12px;letter-spacing:1.5px}
 .hbtn:hover{background:rgba(52,227,230,.16)}
@@ -138,6 +140,7 @@ input,select{font-family:var(--mono)}
     <div class="c-status standby" id="c-status"><span class="d"></span><span id="c-status-t">STANDBY</span></div>
     <div class="spacer"></div>
     <div class="seg" id="lang-seg"><button id="lang-en">EN</button><button id="lang-zh">中文</button></div>
+    <a class="hbtn" id="btn-traj" href="trajectory.html" target="_blank" rel="noopener" data-i18n="c_trajectory">🛰 TRAJECTORY</a>
     <button class="hbtn" id="btn-help" data-i18n="c_obs_setup">⛭ OBS SETUP</button>
   </header>
 
@@ -166,6 +169,10 @@ input,select{font-family:var(--mono)}
         <div class="cg"><span class="gl" data-i18n="c_seq">SEQ</span>
           <button class="btn go" id="btn-start" data-i18n="c_start">START COUNT</button>
           <button class="btn hold" id="btn-hold">HOLD</button>
+        </div>
+        <div class="divider"></div>
+        <div class="cg"><span class="gl" data-i18n="c_status">STATUS</span>
+          <select id="sel-status" class="statsel"></select>
         </div>
         <div class="divider"></div>
         <div class="cg"><span class="gl" data-i18n="c_sett">SET T−</span>
@@ -373,9 +380,13 @@ window.addEventListener('resize',updateScale);
 function tickHeader(){
   const t=currentT(state.clock);
   $('c-clock').textContent = (t==null?'−00:00:00':(t<=0?'−':'+')+fmt(t).str);
-  const si=statusInfo(state.clock); $('c-status').className='c-status '+si.cls; $('c-status-t').textContent=tr(si.key,state.lang);
+  const si=resolveStatus(state); $('c-status').className='c-status '+si.cls; $('c-status-t').textContent=tr(si.key,state.lang);
   requestAnimationFrame(tickHeader);
 }
+
+/* ---- mission status ---- */
+function buildStatusSelect(){ const sel=$('sel-status'); sel.innerHTML=STATUSES.map(s=>`<option value="${s.k}">${esc(tr(s.i,state.lang))}</option>`).join(''); sel.value=state.status||'auto'; }
+$('sel-status').onchange=()=>{ state.status=$('sel-status').value; commit(); };
 
 /* ---- weather ---- */
 function refreshWeather(){ fetchWeather(state.site).then(w=>{ state.weather=w; commit(); }); }
@@ -401,7 +412,7 @@ setInterval(syncStartLabel,400);
 function setLang(lang){
   state.lang=lang; commit();
   applyI18n(document, lang);
-  buildSources(); buildTemplateSelect(); reflectT0(); syncStartLabel();
+  buildSources(); buildTemplateSelect(); buildStatusSelect(); reflectT0(); syncStartLabel();
   $('lang-en').classList.toggle('on', lang==='en');
   $('lang-zh').classList.toggle('on', lang==='zh');
 }
@@ -460,7 +471,7 @@ function buildEventEditor(){
 $('add-ev').onclick=()=>{ state.events.push({t:0,l:'New Event',m:false}); commit(); buildEventEditor(); };
 
 /* ---- reset ---- */
-$('btn-reset').onclick=()=>{ if(confirm('Reset ALL mission data to defaults?')){ const lang=state.lang; state=defaultState(); state.lang=lang; state.clock=clkSetCountdown(600); commit(); buildSiteSelect(); fillForms(); buildEventEditor(); buildTemplateSelect(); setBottom('timeline'); applyI18n(document,lang); buildSources(); refreshWeather(); toast('RESET'); } };
+$('btn-reset').onclick=()=>{ if(confirm('Reset ALL mission data to defaults?')){ const lang=state.lang; state=defaultState(); state.lang=lang; state.clock=clkSetCountdown(600); commit(); buildSiteSelect(); fillForms(); buildEventEditor(); buildTemplateSelect(); buildStatusSelect(); setBottom('timeline'); applyI18n(document,lang); buildSources(); refreshWeather(); toast('RESET'); } };
 
 /* ---- sources ---- */
 function buildSources(){
@@ -481,7 +492,7 @@ window.addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.t
 /* ---- init ---- */
 function init(){
   if(state.clock.mode==='idle') state.clock=clkSetCountdown(600); // looks live on first open
-  buildSiteSelect(); fillForms(); bindForms(); buildEventEditor(); buildSources(); buildTemplateSelect();
+  buildSiteSelect(); fillForms(); bindForms(); buildEventEditor(); buildSources(); buildTemplateSelect(); buildStatusSelect();
   state.tlBg=bgLevel(state); ['solid','half','clear'].forEach(l=>$('bg-'+l).classList.toggle('on', l===state.tlBg));
   applyI18n(document, state.lang);
   $('lang-en').classList.toggle('on', state.lang!=='zh'); $('lang-zh').classList.toggle('on', state.lang==='zh');

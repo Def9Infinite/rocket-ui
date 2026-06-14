@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ORBITAL · Ascent Trajectory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+html,body{background:#04060c;overflow:hidden;height:100%}
+#glcv{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:1}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:2}
+.hud{position:fixed;inset:0;pointer-events:none;font-family:var(--sans);z-index:3}
+.hud>*{pointer-events:auto}
+.top{position:absolute;top:26px;left:34px}
+.top .title{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:5px;color:var(--cyan);text-shadow:0 0 24px rgba(52,227,230,.4),0 2px 10px #000}
+.top .sub{font-family:var(--display);font-size:14px;letter-spacing:2px;color:var(--txt-dim);margin-top:5px;text-shadow:0 2px 8px #000}
+.top .sub b{color:var(--txt)}
+.tlm{position:absolute;top:26px;right:34px;text-align:right}
+.tplus{font-family:var(--display);font-weight:800;font-size:46px;line-height:1;letter-spacing:2px;color:#eaf1fb;text-shadow:0 0 30px rgba(52,227,230,.35),0 2px 12px #000;font-variant-numeric:tabular-nums}
+.tplus.flight{color:#bcd6ff}
+.phase{font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:3px;color:var(--cyan);margin-top:6px;text-shadow:0 2px 8px #000;text-transform:uppercase}
+.trows{margin-top:16px;display:flex;flex-direction:column;gap:7px;align-items:flex-end}
+.trows .r{display:flex;align-items:baseline;gap:10px;justify-content:flex-end}
+.trows .r span{font-size:11px;letter-spacing:2px;color:var(--txt-faint);text-transform:uppercase;font-weight:700}
+.trows .r b{font-family:var(--mono);font-size:19px;color:#eaf1fb;font-weight:700;min-width:150px;text-align:right;text-shadow:0 2px 8px #000}
+.evlog{position:absolute;left:34px;bottom:108px;width:320px;display:flex;flex-direction:column;gap:2px}
+.evlog .eh{font-family:var(--display);font-size:11px;letter-spacing:2.5px;color:var(--txt-faint);margin-bottom:7px}
+.ev{display:flex;align-items:center;gap:11px;padding:5px 0;opacity:.45;transition:.4s}
+.ev.passed{opacity:.95}.ev.cur{opacity:1}
+.ev .dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--cyan);flex:none;transition:.3s}
+.ev.passed .dot{background:var(--go);border-color:var(--go);box-shadow:0 0 10px rgba(55,245,160,.6)}
+.ev.cur .dot{border-color:var(--hold);background:var(--hold);box-shadow:0 0 12px var(--hold);animation:pulse 1.1s infinite}
+.ev .et{font-family:var(--mono);font-size:14px;color:var(--txt-dim);min-width:92px}
+.ev .el{font-family:var(--display);font-size:14px;font-weight:700;letter-spacing:.5px;color:var(--txt);white-space:nowrap}
+.ev.cur .el{color:var(--hold)}
+@keyframes pulse{50%{opacity:.4}}
+.callout{position:absolute;left:50%;top:60%;transform:translate(-50%,0) scale(.9);text-align:center;opacity:0;transition:.35s}
+.callout.show{opacity:1;transform:translate(-50%,0) scale(1)}
+.callout .ct{font-family:var(--mono);font-size:16px;color:var(--cyan);letter-spacing:2px}
+.callout .cl{font-family:var(--display);font-weight:800;font-size:42px;letter-spacing:3px;color:#fff;text-shadow:0 0 34px rgba(52,227,230,.5),0 3px 14px #000;margin-top:4px}
+.orbitbadge{position:absolute;right:34px;bottom:108px;text-align:right;opacity:0;transition:.5s}
+.orbitbadge.show{opacity:1}
+.orbitbadge .ob1{font-family:var(--display);font-size:12px;letter-spacing:3px;color:var(--cyan)}
+.orbitbadge .ob2{font-family:var(--display);font-weight:800;font-size:26px;color:#eaf1fb;margin-top:4px;letter-spacing:1px;text-shadow:0 2px 10px #000}
+.orbitbadge .ob3{font-family:var(--mono);font-size:13px;color:var(--txt-dim);margin-top:4px}
+.ctrl{position:fixed;left:0;right:0;bottom:0;height:54px;display:flex;align-items:center;gap:12px;padding:0 22px;background:rgba(4,7,14,.86);border-top:1px solid var(--line-strong);backdrop-filter:blur(8px);font-family:var(--display);transition:transform .3s;z-index:4}
+body.clean .ctrl,body.clean .topbtns{transform:translateY(160%)}
+body.clean .top,body.clean .evlog{opacity:0;transition:opacity .3s}
+.ctrl button{padding:8px 12px;border:1px solid var(--line-strong);border-radius:8px;background:rgba(255,255,255,.04);color:var(--txt);font-weight:700;font-size:12px;letter-spacing:1px}
+.ctrl button:hover{background:rgba(52,227,230,.16);border-color:var(--cyan-deep)}
+.ctrl button.on{background:rgba(52,227,230,.18);border-color:var(--cyan);color:var(--cyan)}
+.ctrl .gl2{font-size:10px;letter-spacing:2px;color:var(--txt-faint);text-transform:uppercase}
+#scrub{flex:1;accent-color:var(--cyan);height:4px}
+.ctrl #ctrlT{font-family:var(--mono);font-size:13px;color:var(--cyan);min-width:96px}
+.ctrl input[type=number]{width:64px;padding:6px 7px;border-radius:7px;border:1px solid var(--line);background:rgba(0,0,0,.4);color:var(--txt);font-family:var(--mono);font-size:12px}
+.divider{width:1px;height:26px;background:var(--line)}
+.topbtns{position:fixed;top:26px;left:50%;transform:translateX(-50%);display:flex;gap:8px;transition:transform .3s;z-index:5}
+.topbtns a,.topbtns button{padding:8px 13px;border:1px solid var(--line-strong);border-radius:9px;background:rgba(4,7,14,.7);backdrop-filter:blur(8px);color:var(--cyan);font-family:var(--display);font-weight:700;font-size:11px;letter-spacing:1.5px;text-decoration:none}
+.loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--display);letter-spacing:4px;color:var(--txt-dim);font-size:14px;background:#04060c;z-index:9}
+</style>
+</head>
+<body>
+<div id="monitor" style="display:none"></div><!-- prevents the DPI auto-zoom in common.js -->
+<canvas id="glcv"></canvas>
+<canvas id="cv"></canvas>
+<div class="loading" id="loading" data-i18n="tj_loading">LOADING MAP…</div>
+
+<div class="hud">
+  <div class="top">
+    <div class="title" data-i18n="tj_title">ASCENT TRAJECTORY</div>
+    <div class="sub" id="missionLine">—</div>
+  </div>
+  <div class="tlm">
+    <div class="tplus" id="tplus">T-00:00:04</div>
+    <div class="phase" id="phase">PRELAUNCH</div>
+    <div class="trows">
+      <div class="r"><span data-i18n="tj_alt">Alt</span><b id="o-alt">0 km</b></div>
+      <div class="r"><span data-i18n="tj_vel">Velocity</span><b id="o-vel">0.00 km/s</b></div>
+      <div class="r"><span data-i18n="tj_dr">Downrange</span><b id="o-dr">0 km</b></div>
+      <div class="r"><span data-i18n="tj_inc">Inclination</span><b id="o-inc">— °</b></div>
+    </div>
+  </div>
+  <div class="evlog"><div class="eh" data-i18n="tj_events">KEY MILESTONES</div><div id="evlist"></div></div>
+  <div class="callout" id="callout"><div class="ct" id="callout-t">T+00:00:00</div><div class="cl" id="callout-l">LIFTOFF</div></div>
+  <div class="orbitbadge" id="orbitbadge"><div class="ob1" data-i18n="tj_target">TARGET ORBIT</div><div class="ob2" id="ob-main">550 km</div><div class="ob3" id="ob-sub">53.0° · LEO</div></div>
+</div>
+
+<div class="topbtns">
+  <a href="index.html" data-i18n="tj_control">◂ CONTROL</a>
+  <button id="cleanBtn" data-i18n="tj_clean">◉ CLEAN</button>
+</div>
+
+<div class="ctrl" id="ctrl">
+  <button id="play" data-i18n="tj_pause">⏸ PAUSE</button>
+  <button id="restart" data-i18n="tj_replay">↺ REPLAY</button>
+  <input type="range" id="scrub" min="0" max="1000" value="0" />
+  <span id="ctrlT">T+00:00</span>
+  <div class="divider"></div>
+  <span class="gl2" data-i18n="tj_speed">SPEED</span>
+  <button class="spd" data-m="0.5">0.5×</button><button class="spd on" data-m="1">1×</button><button class="spd" data-m="2">2×</button>
+  <div class="divider"></div>
+  <span class="gl2" data-i18n="tj_orbit">ORBIT</span>
+  <span class="gl2">ALT</span><input type="number" id="iAlt" min="120" max="40000" /><span class="gl2">km</span>
+  <span class="gl2">INC</span><input type="number" id="iInc" min="0" max="120" step="0.1" /><span class="gl2">°</span>
+  <button id="applyOrbit" data-i18n="tj_set">SET</button>
+</div>
+
+<script src="common.js"></script>
+<script>
+/* ===================== constants ===================== */
+const R_E=6371, MU=398600.4418, OMEGA_E=7.2921159e-5, D2R=Math.PI/180;
+const OCEAN='#262a32', LAND='#5a616b';
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const glcv=$('glcv'), cv=$('cv'), ctx=cv.getContext('2d');
+let W=0,H=0,cx=0,cy=0,DPR=1;
+let state=readState();
+
+/* ===================== map texture (rasterized land, no borders) ===================== */
+function decodeTopo(topo){
+  const {scale,translate}=topo.transform;
+  const arc=i=>{ const a=topo.arcs[i]; let x=0,y=0; const p=[]; for(const d of a){x+=d[0];y+=d[1];p.push([x*scale[0]+translate[0], y*scale[1]+translate[1]]);} return p; };
+  const ring=idxs=>{ let r=[]; for(const k of idxs){ let pts=k>=0?arc(k):arc(~k).slice().reverse(); if(r.length)pts=pts.slice(1); r=r.concat(pts);} return r; };
+  const land=topo.objects.land, geoms=land.type==='GeometryCollection'?land.geometries:[land], rings=[];
+  for(const g of geoms){
+    if(g.type==='MultiPolygon'){ for(const poly of g.arcs) for(const rg of poly) rings.push(ring(rg)); }
+    else if(g.type==='Polygon'){ for(const rg of g.arcs) rings.push(ring(rg)); }
+  }
+  return rings;
+}
+let texCanvas=null;
+function buildTexture(rings, TW){
+  const TH=TW/2, tc=document.createElement('canvas'); tc.width=TW; tc.height=TH;
+  const x=tc.getContext('2d');
+  x.fillStyle=OCEAN; x.fillRect(0,0,TW,TH); x.fillStyle=LAND;
+  for(const ring of rings){
+    let crosses=false; for(let i=1;i<ring.length;i++){ if(Math.abs(ring[i][0]-ring[i-1][0])>180){crosses=true;break;} }
+    for(const sh of (crosses?[-360,0,360]:[0])){
+      x.beginPath();
+      for(let i=0;i<ring.length;i++){ const px=(ring[i][0]+sh+180)/360*TW, py=(90-ring[i][1])/180*TH; i?x.lineTo(px,py):x.moveTo(px,py); }
+      x.closePath(); x.fill();
+    }
+  }
+  texCanvas=tc;
+}
+
+/* ===================== WebGL globe ===================== */
+let gl=null, glProg=null, glTex=null, glU={};
+const VS=`attribute vec2 p; void main(){ gl_Position=vec4(p,0.0,1.0); }`;
+const FS=`precision highp float;
+uniform vec2 u_res; uniform vec2 u_center; uniform float u_Rpx;
+uniform vec3 u_r,u_u,u_f; uniform sampler2D u_tex;
+const float PI=3.14159265359;
+float hash(vec2 p){ return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453); }
+void main(){
+  float sx=gl_FragCoord.x, sy=u_res.y-gl_FragCoord.y;
+  float nx=(sx-u_center.x)/u_Rpx, ny=(u_center.y-sy)/u_Rpx;
+  float rho2=nx*nx+ny*ny;
+  if(rho2>1.0){
+    vec3 bg=mix(vec3(0.015,0.025,0.045),vec3(0.03,0.045,0.08),sy/u_res.y);
+    float st=hash(floor(gl_FragCoord.xy));
+    bg+=step(0.9986,st)*(0.35+0.6*hash(floor(gl_FragCoord.xy)+9.3));
+    gl_FragColor=vec4(bg,1.0); return;
+  }
+  float nz=sqrt(1.0-rho2);
+  vec3 d=nx*u_r+ny*u_u+nz*u_f;
+  float lat=asin(clamp(d.z,-1.0,1.0)), lon=atan(d.y,d.x);
+  vec2 uv=vec2((lon+PI)/(2.0*PI),(PI*0.5-lat)/PI);
+  vec3 col=texture2D(u_tex,uv).rgb;
+  col*=0.45+0.55*nz;                                   // limb darkening
+  col+=vec3(0.05,0.09,0.16)*smoothstep(0.82,1.0,sqrt(rho2))*nz;  // atmosphere rim
+  gl_FragColor=vec4(col,1.0);
+}`;
+function compile(t,s){ const sh=gl.createShader(t); gl.shaderSource(sh,s); gl.compileShader(sh); if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS)) throw gl.getShaderInfoLog(sh); return sh; }
+function initGL(){
+  gl=glcv.getContext('webgl',{antialias:false,alpha:false}); if(!gl) return false;
+  const prog=gl.createProgram(); gl.attachShader(prog,compile(gl.VERTEX_SHADER,VS)); gl.attachShader(prog,compile(gl.FRAGMENT_SHADER,FS)); gl.linkProgram(prog); gl.useProgram(prog); glProg=prog;
+  const buf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,buf); gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const pl=gl.getAttribLocation(prog,'p'); gl.enableVertexAttribArray(pl); gl.vertexAttribPointer(pl,2,gl.FLOAT,false,0,0);
+  for(const u of ['u_res','u_center','u_Rpx','u_r','u_u','u_f','u_tex']) glU[u]=gl.getUniformLocation(prog,u);
+  // texture: rasterize land at the largest supported size
+  const maxT=Math.min(8192, gl.getParameter(gl.MAX_TEXTURE_SIZE));
+  buildTexture(window._RINGS, maxT);
+  glTex=gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D,glTex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,texCanvas);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.REPEAT);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  gl.uniform1i(glU.u_tex,0);
+  return true;
+}
+function renderGlobe(){
+  if(!gl) return;
+  gl.uniform2f(glU.u_res,W*DPR,H*DPR); gl.uniform2f(glU.u_center,cx*DPR,cy*DPR); gl.uniform1f(glU.u_Rpx,view.Rpx*DPR);
+  gl.uniform3f(glU.u_r,B.r[0],B.r[1],B.r[2]); gl.uniform3f(glU.u_u,B.u[0],B.u[1],B.u[2]); gl.uniform3f(glU.u_f,B.f[0],B.f[1],B.f[2]);
+  gl.drawArrays(gl.TRIANGLES,0,3);
+}
+
+/* ===================== projection (vectors, matches shader) ===================== */
+let view={lat:0,lon:0,Rpx:600}, B={f:[0,0,1],u:[0,1,0],r:[1,0,0]};
+function basisOf(latc,lonc){ const cl=Math.cos(latc),sl=Math.sin(latc),co=Math.cos(lonc),so=Math.sin(lonc); return {f:[cl*co,cl*so,sl], u:[-sl*co,-sl*so,cl], r:[-so,co,0]}; }
+function llaToVec(lat,lon,alt){ const rad=R_E+(alt||0), cl=Math.cos(lat); return [rad*cl*Math.cos(lon), rad*cl*Math.sin(lon), rad*Math.sin(lat)]; }
+function project(P){ const sx=P[0]*B.r[0]+P[1]*B.r[1]+P[2]*B.r[2], sy=P[0]*B.u[0]+P[1]*B.u[1]+P[2]*B.u[2], sz=P[0]*B.f[0]+P[1]*B.f[1]+P[2]*B.f[2], k=view.Rpx/R_E; return {x:cx+sx*k, y:cy-sy*k, z:sz}; }
+const projLLA=(lat,lon,alt)=>project(llaToVec(lat,lon,alt));
+
+/* ===================== trajectory model ===================== */
+let traj=null, majors=[];
+function computeTrajectory(st){
+  const site=SITES[st.site]; const lat0=site.lat*D2R, lon0=site.lon*D2R;
+  const o=parseOrbit(st.rocket.pOrbit||st.rocket.payload);
+  let alt=clamp(o.alt||500,120,40000);
+  let incDeg=(o.inc!=null)?o.inc:Math.abs(site.lat);
+  incDeg=clamp(incDeg, Math.abs(site.lat)+0.01, 180-Math.abs(site.lat)-0.01);
+  const inc=incDeg*D2R, a=R_E+alt, n=Math.sqrt(MU/(a*a*a));
+  let u0=Math.asin(clamp(Math.sin(lat0)/Math.sin(inc),-1,1)); if(incDeg>90) u0=Math.PI-u0;
+  const lamFn=u=>Math.atan2(Math.cos(inc)*Math.sin(u),Math.cos(u)), lam0=lamFn(u0);
+  const evs=[...st.events].sort((x,y)=>x.t-y.t);
+  let tIns; const insEv=evs.find(e=>/seco|insert|orbit/i.test(e.l));
+  if(insEv) tIns=insEv.t; else { const lm=evs.filter(e=>e.m).slice(-1)[0]; tIns=lm?lm.t:(evs.length?evs[evs.length-1].t:540); }
+  tIns=Math.max(tIns,120);
+  const payEv=evs.find(e=>/payload|deploy|separation/i.test(e.l)&&e.t>=tIns-1);
+  const tPay=payEv?payEv.t:Math.round(tIns+Math.max(40,tIns*0.12));
+  const ARC=0.36, vOrb=Math.sqrt(MU/a), ease=x=>x*x*(3-2*x);
+  const du=t=> t<=0?0 : (t<tIns? ARC*Math.pow(t/tIns,1.55) : ARC+n*(t-tIns));
+  const altOf=t=> t<=0?0 : (t>=tIns?alt: alt*ease(clamp(t/tIns*1.12,0,1)));
+  const velOf=t=> t<=0?0 : (t>=tIns?vOrb: vOrb*Math.pow(t/tIns,1.25));
+  const pos=t=>{ const u=u0+du(t); return {lat:Math.asin(Math.sin(inc)*Math.sin(u)), lon:lon0+(lamFn(u)-lam0)-OMEGA_E*Math.max(0,t), alt:altOf(t)}; };
+  return {site,lat0,lon0,inc,incDeg,alt,a,n,u0,lamFn,lam0,tIns,tPay,tEnd:tPay+45,tStart:-4,du,altOf,velOf,pos,vOrb,evs,majors:evs.filter(e=>e.m)};
+}
+function nodeLon(t){ return traj.lon0-traj.lam0-OMEGA_E*Math.max(0,t); }
+function orbitPoint(u,t){ const O=nodeLon(t),cI=Math.cos(traj.inc),sI=Math.sin(traj.inc),cO=Math.cos(O),sO=Math.sin(O),cu=Math.cos(u),su=Math.sin(u); return [traj.a*(cO*cu-cI*sO*su), traj.a*(sO*cu+cI*cO*su), traj.a*sI*su]; }
+
+/* ===================== animation ===================== */
+let simT=-4, playing=true, speedMult=1, lastTs=0, holdTimer=0;
+const rateAt=t=> t<0? 4/2.4 : (t<traj.tIns? traj.tIns/15 : (traj.tEnd-traj.tIns)/8);
+// slow-mo near each major milestone: ease the playback rate down to PACE_MIN on approach, back up after
+const PACE_MIN=0.25;
+function paceFactor(t){ if(!traj||!traj.majors.length) return 1; const W=Math.max(7,traj.tIns*0.05); let f=1; for(const e of traj.majors){ const d=Math.abs(t-e.t); if(d<W){ const x=d/W, k=PACE_MIN+(1-PACE_MIN)*x*x*(3-2*x); if(k<f)f=k; } } return f; }
+function updateCamera(t){
+  const p=traj.pos(Math.max(0,t));
+  const RZOOM=Math.max(W,H)*1.5, RFIT=Math.min(W,H)*0.34;
+  let tgtLat,tgtLon=p.lon,tgtR;
+  if(t<0){ tgtLat=traj.lat0; tgtLon=traj.lon0; tgtR=RZOOM; }
+  else if(t<traj.tIns){ const e=((x)=>x*x*(3-2*x))(t/traj.tIns); tgtLat=p.lat; tgtR=RZOOM+(RFIT-RZOOM)*e; }
+  else { tgtLat=clamp(p.lat,-40*D2R,40*D2R); tgtR=RFIT; }
+  tgtLat=clamp(tgtLat,-78*D2R,78*D2R);
+  const k=(t<0)?0.12:0.07;
+  let dLon=tgtLon-view.lon; while(dLon>Math.PI)dLon-=2*Math.PI; while(dLon<-Math.PI)dLon+=2*Math.PI;
+  view.lon+=dLon*k; view.lat+=(tgtLat-view.lat)*k; view.Rpx+=(tgtR-view.Rpx)*(k*1.2);
+  B=basisOf(view.lat,view.lon);
+}
+function drawOrbit(t,half){
+  if(t<traj.tIns-2) return;
+  ctx.lineWidth=2.4; ctx.setLineDash(half==='back'?[6,8]:[]);
+  ctx.strokeStyle=half==='back'?'rgba(90,160,255,.32)':'rgba(130,185,255,.95)';
+  ctx.shadowColor='rgba(90,160,255,.7)'; ctx.shadowBlur=half==='back'?0:10;
+  ctx.beginPath(); let on=false;
+  for(let d=0;d<=360;d+=2){ const q=project(orbitPoint(d*D2R,t)); if((half==='front')===(q.z>0)){ on?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y); on=true; } else on=false; }
+  ctx.stroke(); ctx.setLineDash([]); ctx.shadowBlur=0;
+}
+function drawAscent(t){
+  if(t<0) return; ctx.lineWidth=3; ctx.strokeStyle='rgba(255,170,70,.95)'; ctx.shadowColor='rgba(255,150,50,.8)'; ctx.shadowBlur=12;
+  ctx.beginPath(); let on=false; const STEPS=140, end=Math.min(t,traj.tEnd);
+  for(let i=0;i<=STEPS;i++){ const pp=traj.pos(end*i/STEPS), q=projLLA(pp.lat,pp.lon,pp.alt); if(q.z>0){ on?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y); on=true; } else on=false; }
+  ctx.stroke(); ctx.shadowBlur=0;
+}
+function drawMajorMarkers(t,lang){               // mark the major milestones on the ascent path
+  ctx.textAlign='left';
+  for(const e of traj.majors){ if(e.t>t) continue; const pp=traj.pos(e.t), q=projLLA(pp.lat,pp.lon,pp.alt); if(q.z<=0) continue;
+    ctx.fillStyle='#34e3e6'; ctx.shadowColor='#34e3e6'; ctx.shadowBlur=8; ctx.beginPath(); ctx.arc(q.x,q.y,4,0,7); ctx.fill(); ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(52,227,230,.55)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(q.x,q.y); ctx.lineTo(q.x+11,q.y-13); ctx.stroke();
+    ctx.font='700 12.5px Orbitron, sans-serif'; ctx.fillStyle='#cdeff1'; ctx.shadowColor='#000'; ctx.shadowBlur=6;
+    ctx.fillText(evLabel(e.l,lang), q.x+14, q.y-13); ctx.font='500 10px "JetBrains Mono"'; ctx.fillStyle='#7fb8c8'; ctx.fillText(fmtT(e.t).full, q.x+14, q.y-2); ctx.shadowBlur=0;
+  }
+}
+function drawSite(){
+  const q=projLLA(traj.lat0,traj.lon0,0); if(q.z<=0) return;
+  const pulse=0.5+0.5*Math.sin(Date.now()/350);
+  ctx.strokeStyle='rgba(52,227,230,'+(0.25+0.4*(1-pulse))+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(q.x,q.y,7+pulse*10,0,7); ctx.stroke();
+  ctx.fillStyle='#34e3e6'; ctx.shadowColor='#34e3e6'; ctx.shadowBlur=12; ctx.beginPath(); ctx.arc(q.x,q.y,4.5,0,7); ctx.fill(); ctx.shadowBlur=0;
+  ctx.font='700 13px Orbitron, sans-serif'; ctx.fillStyle='#bdeef0'; ctx.textAlign='left'; ctx.shadowColor='#000'; ctx.shadowBlur=6; ctx.fillText(traj.site.name.toUpperCase(), q.x+14, q.y+4); ctx.shadowBlur=0;
+}
+function drawVehicle(t){
+  if(t<0) return; const p=traj.pos(t), q=projLLA(p.lat,p.lon,p.alt); if(q.z<=0) return;
+  ctx.fillStyle='#fff'; ctx.shadowColor='#ffd36b'; ctx.shadowBlur=16; ctx.beginPath(); ctx.arc(q.x,q.y,5.5,0,7); ctx.fill(); ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(255,210,110,.9)'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(q.x,q.y,10,0,7); ctx.stroke();
+}
+
+/* ===================== HUD ===================== */
+let lastFired=-1, calloutTimer=0;
+function fmtT(sec){ const s=sec<0?'−':'+',a=Math.abs(sec),hh=String(Math.floor(a/3600)).padStart(2,'0'),mm=String(Math.floor((a%3600)/60)).padStart(2,'0'),ss=String(Math.floor(a%60)).padStart(2,'0'); return {full:`T${s}${hh}:${mm}:${ss}`}; }
+function buildEvList(){ const lang=state.lang; $('evlist').innerHTML=traj.majors.map(e=>`<div class="ev" data-t="${e.t}"><div class="dot"></div><div class="et">${fmtT(e.t).full}</div><div class="el">${esc(evLabel(e.l,lang))}</div></div>`).join(''); }
+function updateHUD(t){
+  const lang=state.lang, f=fmtT(t);
+  $('tplus').textContent=f.full; $('tplus').classList.toggle('flight',t>=0);
+  $('o-alt').textContent=Math.round(traj.altOf(t)).toLocaleString()+' km';
+  $('o-vel').textContent=traj.velOf(t).toFixed(2)+' km/s';
+  $('o-dr').textContent=Math.round(traj.du(t)*R_E).toLocaleString()+' km';
+  $('o-inc').textContent=traj.incDeg.toFixed(1)+'°';
+  let pk='ph_prelaunch'; if(t>=0&&t<traj.tIns)pk='ph_ascent'; else if(t>=traj.tIns&&t<traj.tPay)pk='ph_insertion'; else if(t>=traj.tPay)pk='ph_onorbit';
+  $('phase').textContent=tr(pk,lang);
+  let cur=-1; for(let i=0;i<traj.majors.length;i++) if(traj.majors[i].t<=t) cur=i;
+  [...$('evlist').children].forEach((el,i)=>{ el.classList.toggle('passed',i<cur); el.classList.toggle('cur',i===cur); });
+  if(cur>lastFired&&cur>=0){ const e=traj.majors[cur]; if(t-e.t<6){ $('callout-t').textContent=fmtT(e.t).full; $('callout-l').textContent=evLabel(e.l,lang).toUpperCase(); $('callout').classList.add('show'); calloutTimer=2.2; } lastFired=cur; }
+  if(cur<lastFired) lastFired=cur;
+  if(calloutTimer>0){ calloutTimer-=1/60; if(calloutTimer<=0) $('callout').classList.remove('show'); }
+  $('orbitbadge').classList.toggle('show',t>=traj.tIns-4);
+  $('ctrlT').textContent=f.full;
+  $('scrub').value=Math.round(clamp((t-traj.tStart)/(traj.tEnd-traj.tStart),0,1)*1000);
+}
+
+/* ===================== loop ===================== */
+function frame(ts){
+  const dt=lastTs?Math.min(0.05,(ts-lastTs)/1000):0; lastTs=ts;
+  if(playing&&traj){ if(simT>=traj.tEnd){ holdTimer+=dt; if(holdTimer>2.6){ simT=traj.tStart; holdTimer=0; lastFired=-1; } } else simT+=dt*rateAt(simT)*paceFactor(simT)*speedMult; }
+  if(traj){
+    updateCamera(simT);
+    renderGlobe();
+    ctx.clearRect(0,0,W,H);
+    drawOrbit(simT,'back'); drawOrbit(simT,'front');
+    drawAscent(simT); drawMajorMarkers(simT,state.lang); drawSite(); drawVehicle(simT);
+    updateHUD(simT);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ===================== setup ===================== */
+function rebuild(keepTime){
+  traj=computeTrajectory(state);
+  $('missionLine').innerHTML=`<b>${esc(state.mission)}</b> · ${esc(state.vehicle)} · ${esc(traj.site.name)}`;
+  $('ob-main').textContent=Math.round(traj.alt).toLocaleString()+' km';
+  const cls=/(geo|gto)/i.test(state.rocket.pOrbit||'')?'GTO':(traj.alt>2000?'MEO':(traj.alt>=160?'LEO':'sub-orbital'));
+  $('ob-sub').textContent=traj.incDeg.toFixed(1)+'° · '+cls;
+  $('iAlt').value=Math.round(traj.alt); $('iInc').value=traj.incDeg.toFixed(1);
+  buildEvList(); lastFired=-1; if(!keepTime) simT=traj.tStart;
+}
+function resize(){ DPR=Math.min(2,window.devicePixelRatio||1); W=innerWidth; H=innerHeight; cx=W/2; cy=H/2;
+  glcv.width=W*DPR; glcv.height=H*DPR; if(gl) gl.viewport(0,0,glcv.width,glcv.height);
+  cv.width=W*DPR; cv.height=H*DPR; cv.style.width=W+'px'; cv.style.height=H+'px'; ctx.setTransform(DPR,0,0,DPR,0,0); }
+window.addEventListener('resize',resize);
+
+$('play').onclick=()=>{ playing=!playing; $('play').textContent=tr(playing?'tj_pause':'tj_play',state.lang); };
+$('restart').onclick=()=>{ simT=traj.tStart; holdTimer=0; lastFired=-1; playing=true; $('play').textContent=tr('tj_pause',state.lang); };
+$('scrub').oninput=e=>{ simT=traj.tStart+(e.target.value/1000)*(traj.tEnd-traj.tStart); lastFired=-1; };
+document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ speedMult=+b.dataset.m; document.querySelectorAll('.spd').forEach(x=>x.classList.toggle('on',x===b)); });
+$('applyOrbit').onclick=()=>{ const al=parseFloat($('iAlt').value), inc=parseFloat($('iInc').value); state.rocket={...state.rocket, pOrbit:`${Math.round(al)} km × ${inc}° LEO`, hasP:true}; writeState(state); rebuild(true); };
+$('cleanBtn').onclick=()=>document.body.classList.toggle('clean');
+window.addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT')return; if(e.code==='Space'){e.preventDefault();$('play').click();} if(e.key==='r')$('restart').click(); if(e.key==='c')document.body.classList.toggle('clean'); });
+
+subscribe(s=>{ const rebuildNeeded=s.site!==state.site||s.rocket.pOrbit!==state.rocket.pOrbit||JSON.stringify(s.events)!==JSON.stringify(state.events)||!traj; const langChanged=s.lang!==state.lang; state=s;
+  applyI18n(document,state.lang);
+  if(rebuildNeeded) rebuild(true); else if(langChanged){ buildEvList(); $('missionLine').innerHTML=`<b>${esc(state.mission)}</b> · ${esc(state.vehicle)} · ${esc(traj.site.name)}`; } });
+
+/* boot */
+resize(); applyI18n(document,state.lang);
+fetch('world-land-10m.json',{cache:'force-cache'}).then(r=>r.json()).then(topo=>{
+  window._RINGS=decodeTopo(topo);
+  try{ if(!initGL()) throw 'no webgl'; }catch(err){ $('loading').textContent='WEBGL UNAVAILABLE'; console.error(err); return; }
+  $('loading').style.display='none'; rebuild(); resize();
+}).catch(()=>{ $('loading').textContent='MAP FAILED TO LOAD'; });
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

@@ -1,5 +1,7 @@
 # ORBITAL — Rocket Launch Stream Overlay (for OBS)
 
+**English** · [简体中文](README.zh-CN.md)
+
 A broadcast-style overlay kit for a rocket launch livestream. You capture the
 **video feed yourself** in OBS; these pages are **transparent overlays** that
 composite on top of it. One **control panel** drives every overlay at once —
@@ -20,7 +22,21 @@ each number). Override the scale per source with `?s=<n>` in the URL (`?s=1` = n
 | `rocket.html` | Vehicle / stage spec block | **640 × 1344** — right side (grows w/ sections) |
 | `timeline.html` | Moving flight timeline with event markers | **3840 × 208** — bottom, full width |
 | `ticker.html` | Rolling key‑info ticker (alt to timeline) | **3840 × 144** — bottom |
+| `trajectory.html` | **Ascent trajectory animation** (WebGL hi‑res globe + orbit) — full scene | **1920 × 1080** (1×, no supersampling) |
 | `common.js`, `styles.css` | Shared engine + theme (Maple Mono bundled in `fonts/`) | — |
+
+### Trajectory animation (`trajectory.html`)
+A separate full‑screen view (open it from the control panel's **🛰 TRAJECTORY** button, or as its own
+1920×1080 OBS Browser Source / scene). On a borderless gray land/ocean **globe — rendered in WebGL from a
+high‑resolution (1:10m) coastline** so it stays crisp at any zoom — it: highlights the launch site, flies the
+**computed ascent ground track** (launch azimuth derived from the site latitude + target inclination — NE for
+a 53° LEO, *south* for a Vandenberg SSO), zooms out as simulated **T+** advances, fires your timeline events
+as callouts, and ends on a **globe view of the final orbit** (an inclined ring at the target altitude — the
+vehicle is genuinely in orbit by payload separation). The **major milestones (★) are marked directly on the
+ascent path** with dot + label + T+ time (just like the timeline), and the side list shows the major
+milestones only. Fully **localized (EN / 中文)** — it follows the control panel's language toggle. Orbit is
+read from the payload's target‑orbit field; you can also override altitude/inclination in its bottom bar.
+Controls: play/pause, replay, scrub, speed, and `C` for a clean (UI‑hidden) output.
 
 ## Quick start
 
@@ -49,6 +65,7 @@ each number). Override the scale per source with `?s=<n>` in the URL (`?s=1` = n
 
 - **Language** — an **EN / 中文** toggle in the header localizes the whole interface **and every overlay** (status, countdown, weather, vehicle spec, ticker, and the common flight-event labels). The choice persists and syncs to all sources.
 - **Sequence** — `START COUNT`, `HOLD`/`RESUME`, presets (10:00 / 02:00 / 00:10 / LIFTOFF), or type any `mm:ss`.
+- **Mission status** — the colored status pill on the title bar. Leave it on **AUTO** to track the countdown automatically (STANDBY → T‑MINUS → HOLD → IN FLIGHT), or force a specific status: **STANDBY**, **HOLD**, **NEW T‑0**, **SCRUBBED**, **IN FLIGHT**, **SUCCESS**, or **DESTROYED** — each color‑coded (SUCCESS green, SCRUBBED amber, DESTROYED red with a pulsing dot).
 - **Liftoff · T‑0 (UTC)** — set T‑0 to an absolute **UTC date/time**; the count locks to that instant (and the panel shows the current T‑0 in UTC). Relative `mm:ss` presets still work and are shown as their resulting UTC time.
 - **Bottom band** — `TIMELINE` / `TICKER`, plus a **CLEAR** toggle to make the band semi‑transparent (drops the dark backing; text keeps a shadow so it stays legible over bright video). The timeline is a slim two‑lane design (≤100 px).
 - **Launch site & weather** — pick a pad; live weather is pulled from Open‑Meteo (falls back to simulated if offline) and a launch GO/NO‑GO is computed.
