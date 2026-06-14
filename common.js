@@ -20,7 +20,7 @@ const SITES = {
   xichang:    {name:'Xichang LC-2',           region:'Sichuan, China',  lat:28.246,  lon:102.027},
   wenchang:   {name:'Wenchang LC-101',        region:'Hainan, China',   lat:19.614,  lon:110.951},
   taiyuan:    {name:'Taiyuan LC-9',           region:'Shanxi, China',   lat:38.849,  lon:111.608},
-  andoya:     {name:'Andøya Spaceport',       region:'Nordland, Norway',lat:69.068,  lon:15.490},
+  andoya:     {name:'Andøya Spaceport',       region:'Nordland, Norway',lat:69.082,  lon:15.606},
 };
 
 /* ============================================================
