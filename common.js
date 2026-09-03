@@ -8,20 +8,24 @@
 
 /* ---------- launch sites ---------- */
 const SITES = {
-  slc40:      {name:'Cape Canaveral SLC-40', region:'Florida, USA',    lat:28.562,  lon:-80.577},
-  lc39a:      {name:'Kennedy LC-39A',         region:'Florida, USA',    lat:28.6084, lon:-80.6043},
-  slc4e:      {name:'Vandenberg SLC-4E',      region:'California, USA', lat:34.632,  lon:-120.611},
-  starbase:   {name:'Starbase OLP-1',         region:'Boca Chica, TX',  lat:25.997,  lon:-97.155},
-  wallops:    {name:'Wallops LP-0A',          region:'Virginia, USA',   lat:37.834,  lon:-75.488},
-  kourou:     {name:'Kourou ELA-4',           region:'French Guiana',   lat:5.236,   lon:-52.768},
-  baikonur:   {name:'Baikonur 1/5',           region:'Kazakhstan',      lat:45.92,   lon:63.342},
-  tanegashima:{name:'Tanegashima LA-Y',       region:'Japan',           lat:30.401,  lon:130.97},
-  jiuquan:    {name:'Jiuquan SLS-2',          region:'Inner Mongolia, China', lat:40.958, lon:100.291},
-  xichang:    {name:'Xichang LC-2',           region:'Sichuan, China',  lat:28.246,  lon:102.027},
-  wenchang:   {name:'Wenchang LC-101',        region:'Hainan, China',   lat:19.614,  lon:110.951},
-  taiyuan:    {name:'Taiyuan LC-9',           region:'Shanxi, China',   lat:38.849,  lon:111.608},
-  andoya:     {name:'Andøya Spaceport',       region:'Nordland, Norway',lat:69.068,  lon:15.490},
+  slc40:      {name:'Cape Canaveral SLC-40', region:'Florida, USA',    lat:28.562,  lon:-80.577,  nameZh:'卡纳维拉尔角 SLC-40', regionZh:'美国 佛罗里达州'},
+  lc39a:      {name:'Kennedy LC-39A',         region:'Florida, USA',    lat:28.6084, lon:-80.6043, nameZh:'肯尼迪 LC-39A',      regionZh:'美国 佛罗里达州'},
+  slc4e:      {name:'Vandenberg SLC-4E',      region:'California, USA', lat:34.632,  lon:-120.611, nameZh:'范登堡 SLC-4E',      regionZh:'美国 加利福尼亚州'},
+  starbase:   {name:'Starbase OLP-1',         region:'Boca Chica, TX',  lat:25.997,  lon:-97.155,  nameZh:'星舰基地 OLP-1',     regionZh:'美国 得州 博卡奇卡'},
+  wallops:    {name:'Wallops LP-0A',          region:'Virginia, USA',   lat:37.834,  lon:-75.488,  nameZh:'沃洛普斯 LP-0A',     regionZh:'美国 弗吉尼亚州'},
+  kourou:     {name:'Kourou ELA-4',           region:'French Guiana',   lat:5.236,   lon:-52.768,  nameZh:'库鲁 ELA-4',         regionZh:'法属圭亚那'},
+  baikonur:   {name:'Baikonur 1/5',           region:'Kazakhstan',      lat:45.92,   lon:63.342,   nameZh:'拜科努尔 1/5',       regionZh:'哈萨克斯坦'},
+  tanegashima:{name:'Tanegashima LA-Y',       region:'Japan',           lat:30.401,  lon:130.97,   nameZh:'种子岛 LA-Y',        regionZh:'日本 鹿儿岛'},
+  jiuquan:    {name:'Jiuquan SLS-2',          region:'Inner Mongolia, China', lat:40.958, lon:100.291, nameZh:'酒泉 SLS-2',    regionZh:'中国 内蒙古'},
+  xichang:    {name:'Xichang LC-2',           region:'Sichuan, China',  lat:28.246,  lon:102.027,  nameZh:'西昌 LC-2',          regionZh:'中国 四川'},
+  wenchang:   {name:'Wenchang LC-101',        region:'Hainan, China',   lat:19.614,  lon:110.951,  nameZh:'文昌 LC-101',        regionZh:'中国 海南'},
+  taiyuan:    {name:'Taiyuan LC-9',           region:'Shanxi, China',   lat:38.849,  lon:111.608,  nameZh:'太原 LC-9',          regionZh:'中国 山西'},
+  andoya:     {name:'Andøya Spaceport',       region:'Nordland, Norway',lat:69.068,  lon:15.490,   nameZh:'安岛航天港',         regionZh:'挪威 诺尔兰'},
+  sdscslp:    {name:'Satish Dhawan SLP',      region:'Sriharikota, India', lat:13.7199, lon:80.2304, nameZh:'萨迪什·达万 第二发射台', regionZh:'印度 斯里赫里戈达'},
 };
+/* localized site name / region (falls back to English when no translation exists) */
+function siteName(key,lang){ const s=SITES[key]; return s? ((lang==='zh'&&s.nameZh)?s.nameZh:s.name) : ''; }
+function siteRegion(key,lang){ const s=SITES[key]; return s? ((lang==='zh'&&s.regionZh)?s.regionZh:s.region) : ''; }
 
 /* ============================================================
    i18n — English / 简体中文
@@ -308,7 +312,7 @@ function tickerItems(state){
   const lang=state.lang||'en', r=state.rocket, wx=state.weather, p=activePhase(state);
   const phaseNow = p.now==null ? tr('prelaunch',lang) : evLabel(p.now, lang);
   return [
-    [tr('tk_vehicle',lang),r.name],[tr('tk_mission',lang),state.mission],[tr('tk_site',lang),SITES[state.site].name],
+    [tr('tk_vehicle',lang),r.name],[tr('tk_mission',lang),state.mission],[tr('tk_site',lang),siteName(state.site,lang)],
     [tr('tk_height',lang),r.height],[tr('tk_mass',lang),r.mass],[tr('tk_s1',lang),r.s1eng],[tr('tk_thrust',lang),r.s1thrust],
     [tr('tk_payload',lang),r.payload],[tr('tk_s2',lang),r.s2eng],[tr('tk_phase',lang),phaseNow],
     p.next?[tr('tk_next',lang),`${fmt(p.next.t).full} ${evLabel(p.next.l,lang)}`]:null,

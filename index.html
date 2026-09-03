@@ -305,18 +305,42 @@ const SOURCES=[
 
 /* ---- built-in vehicle presets (spec only) ---- */
 const BUILTIN_TEMPLATES=[
-  {name:'Falcon 9 Block 5', rocket:{name:'Falcon 9 Block 5',operator:'SPACEX',height:'70 m',diameter:'3.7 m',mass:'549,054 kg',payload:'22,800 kg (LEO)',s1eng:'9 × Merlin 1D',s1thrust:'7,607 kN (SL)',s1burn:'162 s',s1prop:'LOX / RP-1',s2eng:'1 × Merlin 1D Vac',s2thrust:'981 kN',s2burn:'397 s',fairing:'13.1 m × 5.2 m'}},
-  {name:'Long March 2F', rocket:{name:'Long March 2F',operator:'CASC',height:'62 m',diameter:'3.35 m',mass:'464,000 kg',payload:'8,400 kg (LEO)',hasB:true,bEng:'4 × YF-20B (strap-on)',bThrust:'2,962 kN',bBurn:'128 s',s1eng:'4 × YF-20B (core)',s1thrust:'2,962 kN (SL)',s1burn:'160 s',s1prop:'N₂O₄ / UDMH',s2eng:'1 × YF-24B',s2thrust:'742 kN',s2burn:'300 s',fairing:'LES tower · ⌀3.8 m'}},
-  {name:'Long March 5', rocket:{name:'Long March 5',operator:'CASC',height:'57 m',diameter:'5.0 m',mass:'869,000 kg',payload:'25,000 kg (LEO)',hasB:true,bEng:'4 × (2 × YF-100)',bThrust:'9,807 kN',bBurn:'173 s',s1eng:'2 × YF-77 (core)',s1thrust:'1,400 kN',s1burn:'475 s',s1prop:'LH₂/LOX · LOX/Kero',s2eng:'2 × YF-75D',s2thrust:'176 kN',s2burn:'700 s',fairing:'12.3 m × 5.2 m'}},
-  {name:'Electron', rocket:{name:'Electron',operator:'ROCKET LAB',height:'18 m',diameter:'1.2 m',mass:'13,000 kg',payload:'300 kg (LEO)',s1eng:'9 × Rutherford',s1thrust:'224 kN (SL)',s1burn:'154 s',s1prop:'LOX / RP-1',s2eng:'1 × Rutherford Vac',s2thrust:'25.8 kN',s2burn:'343 s',fairing:'2.5 m × 1.2 m',hasUS:true,usEng:'1 × Curie (kick)',usThrust:'0.12 kN',usBurn:'restartable'}},
+  {name:'Falcon 9 Block 5',
+   rocket:{name:'Falcon 9 Block 5',operator:'SPACEX',height:'70 m',diameter:'3.7 m',mass:'549,054 kg',payload:'22,800 kg (LEO)',s1eng:'9 × Merlin 1D',s1thrust:'7,607 kN (SL)',s1burn:'162 s',s1prop:'LOX / RP-1',s2eng:'1 × Merlin 1D Vac',s2thrust:'981 kN',s2burn:'397 s',fairing:'13.1 m × 5.2 m'},
+   zh:{name:'猎鹰9号 Block 5',operator:'太空探索技术公司',height:'70 米',diameter:'3.7 米',mass:'549,054 千克',payload:'22,800 千克（近地轨道）',s1eng:'9 × 梅林 1D',s1thrust:'7,607 千牛（海平面）',s1burn:'162 秒',s1prop:'液氧 / 煤油',s2eng:'1 × 梅林 1D 真空版',s2thrust:'981 千牛',s2burn:'397 秒',fairing:'13.1 米 × 5.2 米'}},
+  {name:'Long March 2F',
+   rocket:{name:'Long March 2F',operator:'CASC',height:'62 m',diameter:'3.35 m',mass:'464,000 kg',payload:'8,400 kg (LEO)',hasB:true,bEng:'4 × YF-20B (strap-on)',bThrust:'2,962 kN',bBurn:'128 s',s1eng:'4 × YF-20B (core)',s1thrust:'2,962 kN (SL)',s1burn:'160 s',s1prop:'N₂O₄ / UDMH',s2eng:'1 × YF-24B',s2thrust:'742 kN',s2burn:'300 s',fairing:'LES tower · ⌀3.8 m'},
+   zh:{name:'长征二号F',operator:'中国航天科技集团',height:'62 米',diameter:'3.35 米',mass:'464,000 千克',payload:'8,400 千克（近地轨道）',hasB:true,bEng:'4 × YF-20B 助推器',bThrust:'2,962 千牛',bBurn:'128 秒',s1eng:'4 × YF-20B（芯级）',s1thrust:'2,962 千牛（海平面）',s1burn:'160 秒',s1prop:'四氧化二氮 / 偏二甲肼',s2eng:'1 × YF-24B',s2thrust:'742 千牛',s2burn:'300 秒',fairing:'逃逸塔 · ⌀3.8 米'}},
+  {name:'Long March 5',
+   rocket:{name:'Long March 5',operator:'CASC',height:'57 m',diameter:'5.0 m',mass:'869,000 kg',payload:'25,000 kg (LEO)',hasB:true,bEng:'4 × (2 × YF-100)',bThrust:'9,807 kN',bBurn:'173 s',s1eng:'2 × YF-77 (core)',s1thrust:'1,400 kN',s1burn:'475 s',s1prop:'LH₂/LOX · LOX/Kero',s2eng:'2 × YF-75D',s2thrust:'176 kN',s2burn:'700 s',fairing:'12.3 m × 5.2 m'},
+   zh:{name:'长征五号',operator:'中国航天科技集团',height:'57 米',diameter:'5.0 米',mass:'869,000 千克',payload:'25,000 千克（近地轨道）',hasB:true,bEng:'4 × 助推器（各 2 × YF-100）',bThrust:'9,807 千牛',bBurn:'173 秒',s1eng:'2 × YF-77（芯级）',s1thrust:'1,400 千牛',s1burn:'475 秒',s1prop:'液氢/液氧 · 液氧/煤油',s2eng:'2 × YF-75D',s2thrust:'176 千牛',s2burn:'700 秒',fairing:'12.3 米 × 5.2 米'}},
+  {name:'Electron',
+   rocket:{name:'Electron',operator:'ROCKET LAB',height:'18 m',diameter:'1.2 m',mass:'13,000 kg',payload:'300 kg (LEO)',s1eng:'9 × Rutherford',s1thrust:'224 kN (SL)',s1burn:'154 s',s1prop:'LOX / RP-1',s2eng:'1 × Rutherford Vac',s2thrust:'25.8 kN',s2burn:'343 s',fairing:'2.5 m × 1.2 m',hasUS:true,usEng:'1 × Curie (kick)',usThrust:'0.12 kN',usBurn:'restartable'},
+   zh:{name:'电子号',operator:'火箭实验室',height:'18 米',diameter:'1.2 米',mass:'13,000 千克',payload:'300 千克（近地轨道）',s1eng:'9 × 卢瑟福',s1thrust:'224 千牛（海平面）',s1burn:'154 秒',s1prop:'液氧 / 煤油',s2eng:'1 × 卢瑟福 真空版',s2thrust:'25.8 千牛',s2burn:'343 秒',fairing:'2.5 米 × 1.2 米',hasUS:true,usEng:'1 × 居里（末级）',usThrust:'0.12 千牛',usBurn:'可多次点火'}},
+  // GSLV Mk II — solid core (S139) + 4 liquid strap-ons, Vikas second stage, cryogenic third stage (CUS).
+  // `zh` holds the localized spec: LOAD PRESET applies it when the panel is in 中文.
+  {name:'GSLV Mk II',
+   rocket:{name:'GSLV Mk II',operator:'ISRO',height:'49.13 m',diameter:'2.8 m',mass:'414,750 kg',payload:'6,000 kg (LEO)',
+     hasB:true,bEng:'4 × L40H (Vikas 2)',bThrust:'4 × 680 kN',bBurn:'154 s',
+     s1eng:'1 × S139 (solid core)',s1thrust:'4,700 kN',s1burn:'100 s',s1prop:'HTPB (solid)',
+     s2eng:'1 × Vikas (GS2)',s2thrust:'800 kN',s2burn:'150 s',fairing:'3.4 m ogive',
+     hasS3:true,s3eng:'1 × CE-7.5 (CUS)',s3thrust:'73.5 kN',s3burn:'720 s'},
+   zh:{name:'GSLV Mk II',operator:'印度空间研究组织',height:'49.13 米',diameter:'2.8 米',mass:'414,750 千克',payload:'6,000 千克（近地轨道）',
+     hasB:true,bEng:'4 × L40H 液体助推器（维卡斯 2）',bThrust:'4 × 680 千牛',bBurn:'154 秒',
+     s1eng:'1 × S139 固体芯级',s1thrust:'4,700 千牛',s1burn:'100 秒',s1prop:'HTPB 固体推进剂',
+     s2eng:'1 × 维卡斯（GS2）',s2thrust:'800 千牛',s2burn:'150 秒',fairing:'3.4 米 卵形整流罩',
+     hasS3:true,s3eng:'1 × CE-7.5 低温上面级',s3thrust:'73.5 千牛',s3burn:'720 秒'}},
 ];
 function buildTemplateSelect(){
-  $('tpl-select').innerHTML=BUILTIN_TEMPLATES.map(t=>`<option value="${esc(t.name)}">${esc(t.name)}</option>`).join('');
+  const L=state.lang, sel=$('tpl-select'), cur=sel.value;   // value stays the English key; only the label localizes
+  sel.innerHTML=BUILTIN_TEMPLATES.map(t=>`<option value="${esc(t.name)}">${esc((L==='zh'&&t.zh&&t.zh.name)?t.zh.name:t.name)}</option>`).join('');
+  if(cur) sel.value=cur;                                     // keep the operator's selection across a language switch
 }
 $('tpl-load').onclick=()=>{
   const t=BUILTIN_TEMPLATES.find(x=>x.name===$('tpl-select').value); if(!t) return;
-  state.rocket=Object.assign({}, t.rocket);
-  state.vehicle=(t.rocket.name||state.vehicle).toUpperCase();
+  const spec=(state.lang==='zh' && t.zh) ? t.zh : t.rocket;   // localized spec when one exists
+  state.rocket=Object.assign({}, spec);
+  state.vehicle=(spec.name||state.vehicle).toUpperCase();
   commit(); fillForms(); toast('PRESET LOADED');
 };
 
@@ -401,7 +425,7 @@ setInterval(syncStartLabel,400);
 function setLang(lang){
   state.lang=lang; commit();
   applyI18n(document, lang);
-  buildSources(); buildTemplateSelect(); reflectT0(); syncStartLabel();
+  buildSources(); buildTemplateSelect(); buildSiteSelect(); reflectT0(); syncStartLabel();
   $('lang-en').classList.toggle('on', lang==='en');
   $('lang-zh').classList.toggle('on', lang==='zh');
 }
@@ -422,7 +446,7 @@ $('btn-t0utc').onclick=()=>{ const e=parseUTCLocalInput($('f-t0utc').value); if(
 $('f-t0utc').addEventListener('keydown',ev=>{ if(ev.key==='Enter') $('btn-t0utc').click(); });
 
 /* ---- forms ---- */
-function buildSiteSelect(){ const sel=$('f-site'); sel.innerHTML=Object.entries(SITES).map(([k,v])=>`<option value="${k}">${v.name} — ${v.region}</option>`).join(''); sel.value=state.site; sel.onchange=()=>{ state.site=sel.value; commit(); refreshWeather(); }; }
+function buildSiteSelect(){ const sel=$('f-site'), L=state.lang; sel.innerHTML=Object.keys(SITES).map(k=>`<option value="${k}">${esc(siteName(k,L))} — ${esc(siteRegion(k,L))}</option>`).join(''); sel.value=state.site; sel.onchange=()=>{ state.site=sel.value; commit(); refreshWeather(); }; }
 $('btn-wx').onclick=refreshWeather;
 
 const TXT=['mission','vehicle'];

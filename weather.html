@@ -31,7 +31,7 @@
 function render(state){
   const lang=state.lang;
   applyI18n(document, lang);
-  $('wx-site').textContent=SITES[state.site].name;
+  $('wx-site').textContent=siteName(state.site,lang);
   const w=state.weather;
   if(!w){ $('wx-cond').textContent=tr('wx_await',lang); $('wx-src').textContent='—'; return; }
   $('wx-temp').innerHTML=`${w.temp}<span>°C</span>`;
@@ -43,7 +43,7 @@ function render(state){
   $('wx-cloud').textContent=`${w.cloud}%`;
   $('wx-vis').textContent=`${w.vis} km`;
   const b=$('wx-verdict'); b.textContent=wxVerdictText(w.verdict,lang); b.className='wx-badge '+(w.verdict==='GO'?'go':'nogo');
-  $('wx-src').textContent=`${w.live?tr('wx_live',lang):tr('wx_sim',lang)} · open-meteo · ${w.region||SITES[state.site].region}`;
+  $('wx-src').textContent=`${w.live?tr('wx_live',lang):tr('wx_sim',lang)} · open-meteo · ${siteRegion(w.site||state.site,lang)}`;
 }
 subscribe(render);
 </script>
