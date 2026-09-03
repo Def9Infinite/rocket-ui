@@ -453,8 +453,8 @@ const TXT=['mission','vehicle'];
 const RKT=['name','operator','height','diameter','mass','payload','pName','pCustomer','pType','pMass','pOrbit','bEng','bThrust','bBurn','s1eng','s1thrust','s1burn','s1prop','s2eng','s2thrust','s2burn','fairing','s3eng','s3thrust','s3burn','usEng','usThrust','usBurn'];
 const OPT=[{flag:'hasP',en:'en-p',fields:'fields-p',sec:'sec-p'},{flag:'hasB',en:'en-b',fields:'fields-b',sec:'sec-b'},{flag:'hasS3',en:'en-s3',fields:'fields-s3',sec:'sec-s3'},{flag:'hasUS',en:'en-us',fields:'fields-us',sec:'sec-us'}];
 function fillForms(){
-  TXT.forEach(k=>$('f-'+k).value=state[k]??'');
-  RKT.forEach(k=>$('f-'+k).value=state.rocket[k]??'');
+  TXT.forEach(k=>$('f-'+k).value=state[k]!=null?state[k]:'');
+  RKT.forEach(k=>$('f-'+k).value=state.rocket[k]!=null?state.rocket[k]:'');
   syncOptUI();
 }
 function syncOptUI(){ OPT.forEach(o=>{ const on=!!state.rocket[o.flag]; $(o.en).checked=on; $(o.fields).classList.toggle('hidden',!on); $(o.sec).classList.toggle('off',!on); }); }
@@ -490,7 +490,7 @@ $('btn-reset').onclick=()=>{ if(confirm('Reset ALL mission data to defaults?')){
 function buildSources(){
   const base=location.href.replace(/[^/]*$/,''), L=state.lang;
   $('src-grid').innerHTML=SOURCES.map(s=>`<div class="src"><div class="n">${esc(tr(s.nk,L))}</div><div class="meta">${s.size} · ${esc(tr(s.pk,L))}</div><div class="url" title="${base+s.f}">${base+s.f}</div><button class="cp" data-u="${base+s.f}">${esc(tr('c_copy',L))}</button></div>`).join('');
-  document.querySelectorAll('.cp').forEach(b=>b.onclick=()=>{ navigator.clipboard?.writeText(b.dataset.u).then(()=>toast('URL COPIED')).catch(()=>toast(b.dataset.u)); });
+  document.querySelectorAll('.cp').forEach(b=>b.onclick=()=>{ if(navigator.clipboard) navigator.clipboard.writeText(b.dataset.u).then(()=>toast('URL COPIED')).catch(()=>toast(b.dataset.u)); else toast(b.dataset.u); });
 }
 
 /* ---- help + toast ---- */

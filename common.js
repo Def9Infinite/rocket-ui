@@ -204,7 +204,7 @@ function readState(){
 }
 function pushState(s){   // best-effort POST to the sync server (cross-process bridge)
   try{
-    fetch(SYNC_URL, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(s), keepalive:true})
+    fetch(SYNC_URL, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(s)})
       .then(r=>{
         if(!r || r.status!==409) return;                     // 409 = the server holds a NEWER version than us
         // Our _v is behind the server's (this panel's localStorage was cleared, or it's a fresh
@@ -216,7 +216,7 @@ function pushState(s){   // best-effort POST to the sync server (cross-process b
           _lastV = Math.max(_lastV, sv);
           s._v = sv + 1; _last = s;
           try{ localStorage.setItem(STATE_KEY, JSON.stringify(s)); }catch(e){}
-          fetch(SYNC_URL, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(s), keepalive:true}).catch(()=>{});
+          fetch(SYNC_URL, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(s)}).catch(()=>{});
         });
       }).catch(()=>{});
   }catch(e){}
@@ -314,7 +314,7 @@ async function fetchWeather(siteKey){
   let w;
   try{
     const r=await fetch(url); if(!r.ok) throw 0; const c=(await r.json()).current;
-    w={temp:Math.round(c.temperature_2m),hum:Math.round(c.relative_humidity_2m),wind:Math.round(c.wind_speed_10m),gust:Math.round(c.wind_gusts_10m??c.wind_speed_10m*1.4),dir:c.wind_direction_10m,cloud:Math.round(c.cloud_cover),pres:Math.round(c.surface_pressure),vis:c.visibility!=null?+(c.visibility/1000).toFixed(1):10,code:c.weather_code,site:siteKey,region:site.region,live:true};
+    w={temp:Math.round(c.temperature_2m),hum:Math.round(c.relative_humidity_2m),wind:Math.round(c.wind_speed_10m),gust:Math.round(c.wind_gusts_10m!=null?c.wind_gusts_10m:c.wind_speed_10m*1.4),dir:c.wind_direction_10m,cloud:Math.round(c.cloud_cover),pres:Math.round(c.surface_pressure),vis:c.visibility!=null?+(c.visibility/1000).toFixed(1):10,code:c.weather_code,site:siteKey,region:site.region,live:true};
   }catch(e){
     const j=()=>Math.random(); const seed=[...siteKey].reduce((a,c)=>a+c.charCodeAt(0),0);
     w={temp:Math.round(14+(seed%18)+j()*6),hum:Math.round(45+j()*40),wind:Math.round(8+j()*22),gust:Math.round(14+j()*28),dir:Math.round(j()*360),cloud:Math.round(j()*100),pres:Math.round(1009+j()*16),vis:+(8+j()*7).toFixed(1),code:[0,1,2,3,61,80][Math.floor(j()*6)],site:siteKey,region:site.region,live:false};
