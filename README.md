@@ -36,7 +36,10 @@ vehicle is genuinely in orbit by payload separation). The **major milestones (�
 ascent path** with dot + label + T+ time (just like the timeline), and the side list shows the major
 milestones only. Fully **localized (EN / 中文)** — it follows the control panel's language toggle. Orbit is
 read from the payload's target‑orbit field; you can also override altitude/inclination in its bottom bar.
-Controls: play/pause, replay, scrub, speed, and `C` for a clean (UI‑hidden) output.
+The **RECOVERY** button adds the first stage's return: pick **RTLS** (boostback to the pad) or **DRONESHIP**
+(a downrange landing on the flight azimuth) and the booster separates, arcs down its own dashed track and
+touches down on a marked recovery site. Controls: play/pause, replay, scrub, speed, RECOVERY, and `C` for a
+clean (UI‑hidden) output.
 
 ## Quick start
 
@@ -67,6 +70,9 @@ Controls: play/pause, replay, scrub, speed, and `C` for a clean (UI‑hidden) ou
 - **Sequence** — `START COUNT`, `HOLD`/`RESUME`, presets (10:00 / 02:00 / 00:10 / LIFTOFF), or type any `mm:ss`.
 - **Mission status** — the colored status pill on the title bar. Leave it on **AUTO** to track the countdown automatically (STANDBY → T‑MINUS → HOLD → IN FLIGHT), or force a specific status: **STANDBY**, **HOLD**, **NEW T‑0**, **SCRUBBED**, **IN FLIGHT**, **SUCCESS**, or **DESTROYED** — each color‑coded (SUCCESS green, SCRUBBED amber, DESTROYED red with a pulsing dot).
 - **Liftoff · T‑0 (UTC)** — set T‑0 to an absolute **UTC date/time**; the count locks to that instant (and the panel shows the current T‑0 in UTC). Relative `mm:ss` presets still work and are shown as their resulting UTC time.
+- **Launch window & hold reason** — set the window **opens / closes** times (UTC); the countdown overlay shows `WINDOW 18:30–20:05 UTC` and turns red as the window closes. The **hold / abort reason** you type (e.g. `UPPER-LEVEL WINDS`) appears under the clock whenever the count is held or the status is HOLD / SCRUBBED / DESTROYED.
+- **Branding** — paste a **mission patch image URL** to replace the built‑in emblem on the title bar, and pick an **accent color**; the whole kit (every overlay, including the trajectory view) re‑themes instantly.
+- **Launch criteria** — the weather overlay lists a per‑rule **GO / NO‑GO** breakdown. Surface wind, cloud/precip and temperature come from live weather; **upper winds** and **lightning** are yours to set (they aren't in the weather feed).
 - **Bottom band** — `TIMELINE` / `TICKER`, plus a **CLEAR** toggle to make the band semi‑transparent (drops the dark backing; text keeps a shadow so it stays legible over bright video). The timeline is a slim two‑lane design (≤100 px).
 - **Launch site & weather** — pick a pad; live weather is pulled from Open‑Meteo (falls back to simulated if offline) and a launch GO/NO‑GO is computed.
 - **Vehicle spec** — every field of the rocket block is editable (engines, thrust, burn times, etc.). The Vehicle row shows the rocket's lift **Capacity**, distinct from the actual cargo. **Payload** (name / customer / type / mass / target orbit), **Boosters**, **Third Stage**, and **Upper Stage** are optional sections — toggle them on per‑mission; they only appear in the overlay when enabled (the card grows to fit).

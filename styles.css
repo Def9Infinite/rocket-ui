@@ -41,6 +41,21 @@ body{font-family:var(--sans);color:var(--txt);background:transparent;-webkit-fon
 /* ==================== TITLE BAR ==================== */
 .titlebar{display:flex;align-items:center;gap:16px;padding:12px 18px;width:100%}
 .patch{width:44px;height:44px;flex:none;filter:drop-shadow(0 0 10px rgba(52,227,230,.4))}
+.patch-img{border-radius:50%;object-fit:cover;border:2px solid var(--cyan);background:#060912}
+/* launch window + hold/abort reason (countdown.html) */
+.cd-window{margin-top:10px;font-family:var(--mono);font-size:13px;letter-spacing:1px;color:var(--txt-dim);text-shadow:0 1px 6px rgba(0,0,0,.9)}
+.cd-window .wl{font-family:var(--display);font-weight:700;letter-spacing:2px;color:var(--cyan);margin-right:6px}
+.cd-window.closing{color:var(--nogo)}.cd-window.closing .wl{color:var(--nogo)}
+.cd-holdreason{display:none;margin:8px auto 0;max-width:92%;font-family:var(--display);font-weight:700;font-size:14px;letter-spacing:1px;color:var(--hold);text-shadow:0 1px 6px rgba(0,0,0,.9)}
+/* launch commit criteria (weather.html) */
+.wx-crit-head{margin-top:14px;font-family:var(--display);font-size:12px;letter-spacing:2.5px;color:var(--txt-faint);text-transform:uppercase}
+.wx-criteria{margin-top:8px;display:flex;flex-direction:column;gap:6px}
+.wxc-row{display:flex;align-items:center;gap:8px}
+.wxc-k{font-family:var(--display);font-size:14px;font-weight:600;color:var(--txt);flex:1}
+.wxc-d{font-family:var(--mono);font-size:12px;color:var(--txt-faint)}
+.wxc-s{font-family:var(--display);font-weight:800;font-size:11px;letter-spacing:1.5px;padding:3px 9px;border-radius:6px}
+.wxc-s.go{color:var(--go);background:rgba(55,245,160,.12);border:1px solid rgba(55,245,160,.4)}
+.wxc-s.nogo{color:var(--nogo);background:rgba(255,85,110,.12);border:1px solid rgba(255,85,110,.4)}
 .tb-titles{min-width:0}
 .tb-mission{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:2px;white-space:nowrap;text-shadow:0 2px 8px rgba(0,0,0,.8)}
 .tb-mission b{color:var(--cyan)}

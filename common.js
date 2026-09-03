@@ -31,6 +31,9 @@ const I18N = {
     // status
     st_standby:'STANDBY', st_tminus:'T-MINUS', st_hold:'HOLD', st_inflight:'IN FLIGHT',
     st_auto:'AUTO', st_waiting:'STANDBY', st_newt0:'NEW T-0', st_scrub:'SCRUBBED', st_destroyed:'DESTROYED', st_success:'SUCCESS', st_flying:'IN FLIGHT', c_status:'STATUS',
+    tj_recovery:'RECOVERY', tj_rec_none:'NONE', tj_rtls:'RTLS', tj_droneship:'DRONESHIP', tj_landzone:'LANDING ZONE',
+    c_branding:'BRANDING', c_patch:'Mission patch image URL', c_accent:'Accent color', c_window:'Launch window (UTC)', c_win_open:'Window opens', c_win_close:'Window closes', c_holdreason:'Hold / abort reason', cd_window:'WINDOW',
+    wx_criteria:'LAUNCH CRITERIA', wx_c_surfwind:'Surface Wind', wx_c_upperwind:'Upper Winds', wx_c_cloud:'Cloud / Precip', wx_c_lightning:'Lightning', wx_c_temp:'Temperature',
     // titlebar
     mission:'MISSION', live:'LIVE',
     // countdown
@@ -95,6 +98,9 @@ const I18N = {
   zh:{
     st_standby:'待命', st_tminus:'倒计时', st_hold:'暂停', st_inflight:'飞行中',
     st_auto:'自动', st_waiting:'待命', st_newt0:'重设T0', st_scrub:'推迟', st_destroyed:'飞行失利', st_success:'发射成功', st_flying:'飞行中', c_status:'状态',
+    tj_recovery:'回收', tj_rec_none:'无', tj_rtls:'返场', tj_droneship:'海上回收', tj_landzone:'着陆区',
+    c_branding:'品牌', c_patch:'任务徽章图片网址', c_accent:'主题色', c_window:'发射窗口（UTC）', c_win_open:'窗口开启', c_win_close:'窗口关闭', c_holdreason:'暂停 / 中止原因', cd_window:'窗口',
+    wx_criteria:'发射条件', wx_c_surfwind:'地面风', wx_c_upperwind:'高空风', wx_c_cloud:'云层 / 降水', wx_c_lightning:'雷电', wx_c_temp:'温度',
     mission:'任务', live:'直播',
     countdown:'倒计时', count_held:'⚠ 倒计时暂停 ⚠',
     sub_await:'等待倒计时开始', sub_hold:'自动程序暂停 · 等待恢复',
@@ -172,7 +178,12 @@ function defaultState(){
     tlBg:'half',                              // bottom band background: 'solid' | 'half' | 'clear'
     lang:'en',                                // 'en' | 'zh'
     status:'auto',                            // mission-status override: 'auto' follows the clock, else a STATUSES key
+    patch:'',                                 // mission-patch image URL (titlebar); empty → built-in rocket icon
+    accent:'#34e3e6',                         // channel accent color (themes every overlay)
     clock:{mode:'idle', t0:null, holdT:null}, // mode: idle | counting | hold
+    winOpen:null, winClose:null,              // launch window open/close (epoch ms, UTC) — null = not set
+    holdReason:'',                            // operator note shown on HOLD / SCRUBBED
+    criteria:{upperWind:'go', lightning:'go'},// operator-set launch-commit criteria (the non-weather-derivable ones)
     weather:null,
     rocket:{
       name:'Falcon 9 Block 5', operator:'SPACEX',
@@ -222,13 +233,22 @@ function writeState(s){
   return s;
 }
 
-/* subscribe(cb): cb(state) fires on every change, from any page or process */
+/* subscribe(cb): cb(state) fires on every change, from any page or process.
+   Multiple subscribers are supported: they share ONE polling loop and all receive every new state
+   (the _lastV guard is global, so per-callback pollers would starve each other). A callback that
+   registers late is primed immediately with the newest known state. */
+let _subs = [], _polling = false;
 function subscribe(cb){
+  if(typeof cb!=='function') return;
+  _subs.push(cb);
+  if(_last){ try{ cb(_last); }catch(e){} }        // prime late registrants (e.g. overlays that render only from subscribe)
+  if(_polling) return;                            // polling already running — one loop serves everyone
+  _polling = true;
   function apply(s){
     if(!s || typeof s._v!=='number' || s._v <= _lastV) return;            // ignore stale / unchanged
     _last = s; _lastV = s._v;
     try{ localStorage.setItem(STATE_KEY, JSON.stringify(s)); }catch(e){}
-    cb(s);
+    _subs.forEach(f=>{ try{ f(s); }catch(e){} });
   }
   function pollHttp(){
     fetch(SYNC_URL, {cache:'no-store'}).then(r=>(r&&r.ok)?r.text():'').then(t=>{ if(t){ try{ apply(JSON.parse(t)); }catch(e){} } }).catch(()=>{});
@@ -317,6 +337,23 @@ const dirName=d=>['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW'
 
 function computeVerdict(w){ let n=false; if(w.gust>=40) n=true; if([65,75,82,95,96,99].includes(w.code)) n=true; if(w.vis<3) n=true; return n?'NO-GO':'GO'; }
 
+/* ---------- branding: accent color theming (overlays call applyTheme on load + state change) ---------- */
+function _shade(hex,p){ const m=/^#?([0-9a-f]{6})$/i.exec(hex||''); if(!m) return hex; const n=parseInt(m[1],16), f=x=>Math.max(0,Math.min(255,Math.round(x*(1+p)))); return '#'+[f((n>>16)&255),f((n>>8)&255),f(n&255)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+function applyTheme(state){ const a=(state&&state.accent)||'#34e3e6', r=document.documentElement.style; r.setProperty('--cyan',a); r.setProperty('--cyan-deep',_shade(a,-0.28)); }
+
+/* ---------- launch-commit criteria: per-rule GO/NO-GO (derived from live weather + operator-set rules) ---------- */
+function commitCriteria(state){
+  const w=state&&state.weather, c=(state&&state.criteria)||{}, go=ok=>ok?'go':'nogo', out=[];
+  if(w){
+    out.push({k:'wx_c_surfwind', status:go(w.gust<40),                                  detail:`${w.gust} km/h`});
+    out.push({k:'wx_c_cloud',    status:go(![61,63,65,71,73,75,80,81,82,95,96,99].includes(w.code)), detail:`${w.cloud}%`});
+    out.push({k:'wx_c_temp',     status:go(w.temp>-10&&w.temp<45),                       detail:`${w.temp}°C`});
+  }
+  out.push({k:'wx_c_upperwind', status:c.upperWind==='nogo'?'nogo':'go', detail:''});
+  out.push({k:'wx_c_lightning', status:c.lightning==='nogo'?'nogo':'go', detail:''});
+  return out;
+}
+
 /* fetch live weather for a site key; resolves to a weather object (live or simulated) */
 async function fetchWeather(siteKey){
   const site=SITES[siteKey]||SITES.slc40;
@@ -368,3 +405,5 @@ const DPI = (function(){ try{ const q=new URLSearchParams(location.search).get('
 function applyDpi(){ if(DPI && DPI!==1) document.documentElement.style.zoom = DPI; return DPI; }
 /* auto-apply on overlay pages (the control panel has #monitor and is left at 1×) */
 if(typeof document!=='undefined' && !document.getElementById('monitor')) applyDpi();
+/* auto-apply the channel accent color on every page: once on load, then on each state change */
+try{ applyTheme(readState()); subscribe(applyTheme); }catch(_){}

@@ -17,6 +17,8 @@
   </div>
   <div class="cd-sub" id="cd-sub" data-i18n="sub_await">AWAITING COUNT START</div>
   <div class="hold-banner" data-i18n="count_held">⚠ COUNT HELD ⚠</div>
+  <div class="cd-holdreason" id="cd-holdreason"></div>
+  <div class="cd-window" id="cd-window"></div>
 </div>
 <script src="common.js"></script>
 <script>
@@ -33,6 +35,16 @@ function frame(){
   else if(t==null) sub.textContent=tr('sub_await',lang);
   else if(t<0) sub.textContent=tr('sub_go',lang);
   else sub.textContent=tr('sub_flight',lang);
+  // hold / abort reason — shown while holding or when the mission status is a hold/scrub/abort
+  const hr=$('cd-holdreason'), reason=(state.holdReason||'').trim();
+  const showReason = reason && (state.clock.mode==='hold' || ['hold','scrub','destroyed'].includes(state.status));
+  hr.textContent = showReason ? reason : ''; hr.style.display = showReason ? '' : 'none';
+  // launch window (UTC)
+  const wEl=$('cd-window'), hm=ms=>new Date(ms).toISOString().slice(11,16);
+  if(state.winOpen||state.winClose){ wEl.style.display='';
+    wEl.innerHTML=`<span class="wl">${tr('cd_window',lang)}</span> ${state.winOpen?hm(state.winOpen):'—'}–${state.winClose?hm(state.winClose):'—'} UTC`;
+    wEl.classList.toggle('closing', !!state.winClose && Date.now()>state.winClose-60000);
+  } else { wEl.style.display='none'; }
   requestAnimationFrame(frame);
 }
 subscribe(s=>{ state=s; applyI18n(document, state.lang); });

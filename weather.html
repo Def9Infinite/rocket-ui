@@ -24,6 +24,8 @@
     <div class="wx-cell"><div class="k" data-i18n="wx_vis">Visibility</div><div class="v" id="wx-vis">— km</div></div>
   </div>
   <div class="wx-verdict"><span class="lab" data-i18n="wx_launch">Launch Weather</span><span class="wx-badge go" id="wx-verdict">—</span></div>
+  <div class="wx-crit-head" data-i18n="wx_criteria">LAUNCH CRITERIA</div>
+  <div class="wx-criteria" id="wx-criteria"></div>
   <div class="wx-src" id="wx-src">—</div>
 </div>
 <script src="common.js"></script>
@@ -32,6 +34,7 @@ function render(state){
   const lang=state.lang;
   applyI18n(document, lang);
   $('wx-site').textContent=SITES[state.site].name;
+  $('wx-criteria').innerHTML=commitCriteria(state).map(c=>`<div class="wxc-row"><span class="wxc-k">${esc(tr(c.k,lang))}</span><span class="wxc-d">${esc(c.detail||'')}</span><span class="wxc-s ${c.status}">${esc(wxVerdictText(c.status==='go'?'GO':'NO-GO',lang))}</span></div>`).join('');
   const w=state.weather;
   if(!w){ $('wx-cond').textContent=tr('wx_await',lang); $('wx-src').textContent='—'; return; }
   $('wx-temp').innerHTML=`${w.temp}<span>°C</span>`;

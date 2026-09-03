@@ -105,6 +105,9 @@ body.clean .top,body.clean .evlog{opacity:0;transition:opacity .3s}
   <span class="gl2">ALT</span><input type="number" id="iAlt" min="120" max="40000" /><span class="gl2">km</span>
   <span class="gl2">INC</span><input type="number" id="iInc" min="0" max="120" step="0.1" /><span class="gl2">°</span>
   <button id="applyOrbit" data-i18n="tj_set">SET</button>
+  <div class="divider"></div>
+  <span class="gl2" data-i18n="tj_recovery">RECOVERY</span>
+  <button id="btn-rec">NONE</button>
 </div>
 
 <script src="common.js"></script>
@@ -238,9 +241,22 @@ function computeTrajectory(st){
 }
 function nodeLon(t){ return traj.lon0-traj.lam0-OMEGA_E*Math.max(0,t); }
 function orbitPoint(u,t){ const O=nodeLon(t),cI=Math.cos(traj.inc),sI=Math.sin(traj.inc),cO=Math.cos(O),sO=Math.sin(O),cu=Math.cos(u),su=Math.sin(u); return [traj.a*(cO*cu-cI*sO*su), traj.a*(sO*cu+cI*cO*su), traj.a*sI*su]; }
+function recoveryPath(){            // booster recovery: separation → landing site (null when off)
+  if(!traj||recovery==='none') return null;
+  const sepEv=traj.evs.find(e=>/stage\s?sep/i.test(e.l))||traj.evs.find(e=>/meco/i.test(e.l));
+  const tSep=Math.max(30, sepEv?sepEv.t:traj.tIns*0.28);
+  const sep=traj.pos(tSep);
+  let land;
+  if(recovery==='rtls') land={lat:traj.lat0, lon:traj.lon0, alt:0};
+  else { const dp=traj.pos(Math.min(tSep*2,(tSep+traj.tIns)/2)); land={lat:dp.lat, lon:dp.lon, alt:0}; }
+  const tLand=tSep+(recovery==='rtls'?380:300);
+  const pt=s=>({ lat:sep.lat+(land.lat-sep.lat)*s, lon:sep.lon+(land.lon-sep.lon)*s, alt:sep.alt*(1-s)+sep.alt*0.45*Math.sin(Math.PI*s) });
+  return {tSep,tLand,land,sep,pt};
+}
 
 /* ===================== animation ===================== */
 let simT=-4, playing=true, speedMult=1, lastTs=0, holdTimer=0;
+let recovery='none';   // 'none' | 'rtls' | 'asds' — first-stage booster recovery mode
 const rateAt=t=> t<0? 4/2.4 : (t<traj.tIns? traj.tIns/15 : (traj.tEnd-traj.tIns)/8);
 // slow-mo near each major milestone: ease the playback rate down to PACE_MIN on approach, back up after
 const PACE_MIN=0.25;
@@ -272,6 +288,25 @@ function drawAscent(t){
   ctx.beginPath(); let on=false; const STEPS=140, end=Math.min(t,traj.tEnd);
   for(let i=0;i<=STEPS;i++){ const pp=traj.pos(end*i/STEPS), q=projLLA(pp.lat,pp.lon,pp.alt); if(q.z>0){ on?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y); on=true; } else on=false; }
   ctx.stroke(); ctx.shadowBlur=0;
+}
+function drawRecovery(t){
+  if(!traj||recovery==='none') return; const rp=recoveryPath(); if(!rp||t<rp.tSep-2) return;
+  // recovery path — amber dashed polyline, front-face only
+  ctx.lineWidth=2; ctx.setLineDash([5,6]); ctx.strokeStyle='rgba(255,200,90,.9)'; ctx.shadowColor='rgba(255,190,70,.7)'; ctx.shadowBlur=8;
+  ctx.beginPath(); let on=false;
+  for(let s=0;s<=1.0001;s+=0.04){ const pp=rp.pt(s), q=projLLA(pp.lat,pp.lon,pp.alt); if(q.z>0){ on?ctx.lineTo(q.x,q.y):ctx.moveTo(q.x,q.y); on=true; } else on=false; }
+  ctx.stroke(); ctx.setLineDash([]); ctx.shadowBlur=0;
+  // landing site marker
+  const ls=projLLA(rp.land.lat,rp.land.lon,0);
+  if(ls.z>0){
+    if(recovery==='asds'){ ctx.strokeStyle='rgba(90,220,235,.95)'; ctx.lineWidth=2; ctx.shadowColor='#34e3e6'; ctx.shadowBlur=8; ctx.strokeRect(ls.x-5,ls.y-5,10,10); ctx.shadowBlur=0; }
+    else { ctx.fillStyle='#ffc85a'; ctx.shadowColor='#ffc85a'; ctx.shadowBlur=10; ctx.beginPath(); ctx.arc(ls.x,ls.y,4,0,7); ctx.fill(); ctx.shadowBlur=0; ctx.strokeStyle='rgba(255,200,90,.85)'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.arc(ls.x,ls.y,8,0,7); ctx.stroke(); }
+    ctx.font='700 12px Orbitron, sans-serif'; ctx.fillStyle=recovery==='asds'?'#bdeef0':'#ffe0a0'; ctx.textAlign='left'; ctx.shadowColor='#000'; ctx.shadowBlur=6; ctx.fillText(tr(recovery==='rtls'?'tj_landzone':'tj_droneship',state.lang), ls.x+12, ls.y+4); ctx.shadowBlur=0;
+  }
+  // booster marker — amber diamond travelling sep → land
+  if(t>=rp.tSep){ const s=clamp((t-rp.tSep)/(rp.tLand-rp.tSep),0,1), bp=rp.pt(s), q=projLLA(bp.lat,bp.lon,bp.alt);
+    if(q.z>0){ ctx.fillStyle='#ffb43c'; ctx.shadowColor='#ffb43c'; ctx.shadowBlur=12; ctx.save(); ctx.translate(q.x,q.y); ctx.rotate(Math.PI/4); ctx.fillRect(-4,-4,8,8); ctx.restore(); ctx.shadowBlur=0; }
+  }
 }
 function drawMajorMarkers(t,lang){               // mark the major milestones on the ascent path
   ctx.textAlign='left';
@@ -327,7 +362,7 @@ function frame(ts){
     renderGlobe();
     ctx.clearRect(0,0,W,H);
     drawOrbit(simT,'back'); drawOrbit(simT,'front');
-    drawAscent(simT); drawMajorMarkers(simT,state.lang); drawSite(); drawVehicle(simT);
+    drawAscent(simT); drawRecovery(simT); drawMajorMarkers(simT,state.lang); drawSite(); drawVehicle(simT);
     updateHUD(simT);
   }
   requestAnimationFrame(frame);
@@ -341,7 +376,7 @@ function rebuild(keepTime){
   const cls=/(geo|gto)/i.test(state.rocket.pOrbit||'')?'GTO':(traj.alt>2000?'MEO':(traj.alt>=160?'LEO':'sub-orbital'));
   $('ob-sub').textContent=traj.incDeg.toFixed(1)+'° · '+cls;
   $('iAlt').value=Math.round(traj.alt); $('iInc').value=traj.incDeg.toFixed(1);
-  buildEvList(); lastFired=-1; if(!keepTime) simT=traj.tStart;
+  buildEvList(); setRecLabel(); lastFired=-1; if(!keepTime) simT=traj.tStart;
 }
 function resize(){ DPR=Math.min(2,window.devicePixelRatio||1); W=innerWidth; H=innerHeight; cx=W/2; cy=H/2;
   glcv.width=W*DPR; glcv.height=H*DPR; if(gl) gl.viewport(0,0,glcv.width,glcv.height);
@@ -353,12 +388,14 @@ $('restart').onclick=()=>{ simT=traj.tStart; holdTimer=0; lastFired=-1; playing=
 $('scrub').oninput=e=>{ simT=traj.tStart+(e.target.value/1000)*(traj.tEnd-traj.tStart); lastFired=-1; };
 document.querySelectorAll('.spd').forEach(b=>b.onclick=()=>{ speedMult=+b.dataset.m; document.querySelectorAll('.spd').forEach(x=>x.classList.toggle('on',x===b)); });
 $('applyOrbit').onclick=()=>{ const al=parseFloat($('iAlt').value), inc=parseFloat($('iInc').value); state.rocket={...state.rocket, pOrbit:`${Math.round(al)} km × ${inc}° LEO`, hasP:true}; writeState(state); rebuild(true); };
+$('btn-rec').onclick=()=>{ recovery = recovery==='none'?'rtls':recovery==='rtls'?'asds':'none'; setRecLabel(); };
+function setRecLabel(){ $('btn-rec').textContent = tr(recovery==='none'?'tj_rec_none':recovery==='rtls'?'tj_rtls':'tj_droneship', state.lang); $('btn-rec').classList.toggle('on', recovery!=='none'); }
 $('cleanBtn').onclick=()=>document.body.classList.toggle('clean');
 window.addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT')return; if(e.code==='Space'){e.preventDefault();$('play').click();} if(e.key==='r')$('restart').click(); if(e.key==='c')document.body.classList.toggle('clean'); });
 
 subscribe(s=>{ const rebuildNeeded=s.site!==state.site||s.rocket.pOrbit!==state.rocket.pOrbit||JSON.stringify(s.events)!==JSON.stringify(state.events)||!traj; const langChanged=s.lang!==state.lang; state=s;
   applyI18n(document,state.lang);
-  if(rebuildNeeded) rebuild(true); else if(langChanged){ buildEvList(); $('missionLine').innerHTML=`<b>${esc(state.mission)}</b> · ${esc(state.vehicle)} · ${esc(traj.site.name)}`; } });
+  if(rebuildNeeded) rebuild(true); else if(langChanged){ buildEvList(); setRecLabel(); $('missionLine').innerHTML=`<b>${esc(state.mission)}</b> · ${esc(state.vehicle)} · ${esc(traj.site.name)}`; } });
 
 /* boot */
 resize(); applyI18n(document,state.lang);

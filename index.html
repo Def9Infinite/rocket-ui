@@ -205,16 +205,23 @@ input,select{font-family:var(--mono)}
       <div class="field"><label data-i18n="f_t0utc">Set T‑0 as a UTC date / time</label><input type="datetime-local" id="f-t0utc" step="1" /></div>
       <button class="btn sm primary" id="btn-t0utc" style="width:100%;padding:9px" data-i18n="c_sett0utc">SET T‑0 (UTC)</button>
       <div class="hint" id="t0-readout">T‑0: not set</div>
+      <div class="frow"><div class="field"><label data-i18n="c_win_open">Window opens (UTC)</label><input type="datetime-local" id="f-winopen" step="60" /></div><div class="field"><label data-i18n="c_win_close">Window closes (UTC)</label><input type="datetime-local" id="f-winclose" step="60" /></div></div>
+      <div class="field"><label data-i18n="c_holdreason">Hold / abort reason</label><input id="f-holdReason" placeholder="e.g. UPPER-LEVEL WINDS" /></div>
 
       <div class="sec" data-i18n="sec_site_wx">Launch Site &amp; Weather</div>
       <div class="field"><label data-i18n="f_site">Launch Site</label><select id="f-site"></select></div>
       <button class="btn sm" id="btn-wx" style="width:100%;padding:9px" data-i18n="c_refresh_wx">↻ REFRESH LIVE WEATHER</button>
+      <div class="frow"><div class="field"><label data-i18n="wx_c_upperwind">Upper Winds</label><select id="f-cwUpper"><option value="go">GO</option><option value="nogo">NO-GO</option></select></div><div class="field"><label data-i18n="wx_c_lightning">Lightning</label><select id="f-cwLight"><option value="go">GO</option><option value="nogo">NO-GO</option></select></div></div>
 
       <div class="sec" data-i18n="sec_broadcast">Broadcast</div>
       <div class="frow">
         <div class="field"><label data-i18n="f_mission">Mission</label><input id="f-mission" /></div>
         <div class="field"><label data-i18n="f_vehicle">Vehicle</label><input id="f-vehicle" /></div>
       </div>
+
+      <div class="sec" data-i18n="c_branding">Branding</div>
+      <div class="field"><label data-i18n="c_patch">Mission patch image URL</label><input id="f-patch" placeholder="https://…/patch.png" /></div>
+      <div class="frow" style="align-items:flex-end"><div class="field"><label data-i18n="c_accent">Accent color</label><input type="color" id="f-accent" style="height:38px;padding:3px;cursor:pointer" /></div><button class="btn sm" id="btn-accent-reset" title="Reset accent">↺</button></div>
 
       <div class="sec" data-i18n="sec_vspec">Vehicle Spec</div>
       <div class="tpl-bar">
@@ -436,7 +443,7 @@ $('f-t0utc').addEventListener('keydown',ev=>{ if(ev.key==='Enter') $('btn-t0utc'
 function buildSiteSelect(){ const sel=$('f-site'); sel.innerHTML=Object.entries(SITES).map(([k,v])=>`<option value="${k}">${v.name} — ${v.region}</option>`).join(''); sel.value=state.site; sel.onchange=()=>{ state.site=sel.value; commit(); refreshWeather(); }; }
 $('btn-wx').onclick=refreshWeather;
 
-const TXT=['mission','vehicle'];
+const TXT=['mission','vehicle','patch','holdReason'];
 const RKT=['name','operator','height','diameter','mass','payload','pName','pCustomer','pType','pMass','pOrbit','bEng','bThrust','bBurn','s1eng','s1thrust','s1burn','s1prop','s2eng','s2thrust','s2burn','fairing','s3eng','s3thrust','s3burn','usEng','usThrust','usBurn'];
 const OPT=[{flag:'hasP',en:'en-p',fields:'fields-p',sec:'sec-p'},{flag:'hasB',en:'en-b',fields:'fields-b',sec:'sec-b'},{flag:'hasS3',en:'en-s3',fields:'fields-s3',sec:'sec-s3'},{flag:'hasUS',en:'en-us',fields:'fields-us',sec:'sec-us'}];
 function fillForms(){
@@ -450,6 +457,21 @@ function bindForms(){
   RKT.forEach(k=>$('f-'+k).addEventListener('input',()=>{ state.rocket[k]=$('f-'+k).value; commit(); }));
   OPT.forEach(o=>$(o.en).addEventListener('change',()=>{ state.rocket[o.flag]=$(o.en).checked; syncOptUI(); commit(); }));
 }
+/* ---- branding (accent) · launch window · commit criteria ---- */
+const epochToInput=ms=>ms?new Date(ms).toISOString().slice(0,16):'';
+function fillExtras(){
+  $('f-accent').value=state.accent||'#34e3e6';
+  $('f-winopen').value=epochToInput(state.winOpen); $('f-winclose').value=epochToInput(state.winClose);
+  $('f-cwUpper').value=(state.criteria&&state.criteria.upperWind)||'go';
+  $('f-cwLight').value=(state.criteria&&state.criteria.lightning)||'go';
+  applyTheme(state);
+}
+$('f-accent').oninput=()=>{ state.accent=$('f-accent').value; applyTheme(state); commit(); };
+$('btn-accent-reset').onclick=()=>{ state.accent='#34e3e6'; $('f-accent').value='#34e3e6'; applyTheme(state); commit(); };
+$('f-winopen').onchange=()=>{ state.winOpen=parseUTCLocalInput($('f-winopen').value); commit(); };
+$('f-winclose').onchange=()=>{ state.winClose=parseUTCLocalInput($('f-winclose').value); commit(); };
+$('f-cwUpper').onchange=()=>{ state.criteria={...(state.criteria||{}),upperWind:$('f-cwUpper').value}; commit(); };
+$('f-cwLight').onchange=()=>{ state.criteria={...(state.criteria||{}),lightning:$('f-cwLight').value}; commit(); };
 
 /* ---- timeline editor ---- */
 function buildEventEditor(){
@@ -471,7 +493,7 @@ function buildEventEditor(){
 $('add-ev').onclick=()=>{ state.events.push({t:0,l:'New Event',m:false}); commit(); buildEventEditor(); };
 
 /* ---- reset ---- */
-$('btn-reset').onclick=()=>{ if(confirm('Reset ALL mission data to defaults?')){ const lang=state.lang; state=defaultState(); state.lang=lang; state.clock=clkSetCountdown(600); commit(); buildSiteSelect(); fillForms(); buildEventEditor(); buildTemplateSelect(); buildStatusSelect(); setBottom('timeline'); applyI18n(document,lang); buildSources(); refreshWeather(); toast('RESET'); } };
+$('btn-reset').onclick=()=>{ if(confirm('Reset ALL mission data to defaults?')){ const lang=state.lang; state=defaultState(); state.lang=lang; state.clock=clkSetCountdown(600); commit(); buildSiteSelect(); fillForms(); buildEventEditor(); buildTemplateSelect(); buildStatusSelect(); fillExtras(); setBottom('timeline'); applyI18n(document,lang); buildSources(); refreshWeather(); toast('RESET'); } };
 
 /* ---- sources ---- */
 function buildSources(){
@@ -492,7 +514,7 @@ window.addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.t
 /* ---- init ---- */
 function init(){
   if(state.clock.mode==='idle') state.clock=clkSetCountdown(600); // looks live on first open
-  buildSiteSelect(); fillForms(); bindForms(); buildEventEditor(); buildSources(); buildTemplateSelect(); buildStatusSelect();
+  buildSiteSelect(); fillForms(); bindForms(); buildEventEditor(); buildSources(); buildTemplateSelect(); buildStatusSelect(); fillExtras();
   state.tlBg=bgLevel(state); ['solid','half','clear'].forEach(l=>$('bg-'+l).classList.toggle('on', l===state.tlBg));
   applyI18n(document, state.lang);
   $('lang-en').classList.toggle('on', state.lang!=='zh'); $('lang-zh').classList.toggle('on', state.lang==='zh');
