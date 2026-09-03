@@ -57,7 +57,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.path.split("?")[0] == "/state":
             n = int(self.headers.get("Content-Length", "0") or "0")
             raw = self.rfile.read(n).decode("utf-8") if n else ""
-            code = 400
+            code, cur = 400, -1
             try:
                 obj = json.loads(raw)
                 v = int(obj.get("_v", 0)) if isinstance(obj, dict) else 0
@@ -65,9 +65,23 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     if v >= _state["v"]:          # ignore out-of-order / stale writes
                         _state["data"] = raw
                         _state["v"] = v
-                code = 204
+                        code = 204
+                    else:
+                        # The writer is BEHIND us (its localStorage was cleared / it is a fresh
+                        # panel on a long-running server). Silently dropping this used to lock the
+                        # panel out forever: every edit was discarded and overlays kept the old
+                        # state. Tell the client our version so it can re-sync and republish.
+                        code, cur = 409, _state["v"]
             except Exception:
                 code = 400
+            if code == 409:
+                body = json.dumps({"_v": cur}).encode("utf-8")
+                self.send_response(409)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             self.send_response(code)
             self.end_headers()
             return

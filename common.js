@@ -203,7 +203,23 @@ function readState(){
   return defaultState();
 }
 function pushState(s){   // best-effort POST to the sync server (cross-process bridge)
-  try{ fetch(SYNC_URL, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(s), keepalive:true}).catch(()=>{}); }catch(e){}
+  try{
+    fetch(SYNC_URL, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(s), keepalive:true})
+      .then(r=>{
+        if(!r || r.status!==409) return;                     // 409 = the server holds a NEWER version than us
+        // Our _v is behind the server's (this panel's localStorage was cleared, or it's a fresh
+        // panel against a long-running server). Without this the server would keep discarding every
+        // write and the operator's changes would never reach the overlays. Re-sync and republish once.
+        return r.json().catch(()=>null).then(j=>{
+          const sv = (j && typeof j._v==='number') ? j._v : 0;
+          if(sv < (s._v||0)) return;
+          _lastV = Math.max(_lastV, sv);
+          s._v = sv + 1; _last = s;
+          try{ localStorage.setItem(STATE_KEY, JSON.stringify(s)); }catch(e){}
+          fetch(SYNC_URL, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(s), keepalive:true}).catch(()=>{});
+        });
+      }).catch(()=>{});
+  }catch(e){}
 }
 function writeState(s){
   s._v = Math.max(_lastV, s._v||0) + 1;                                   // monotonically increasing
