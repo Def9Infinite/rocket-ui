@@ -516,18 +516,8 @@ let toastTO; function toast(t){ const el=$('toast'); el.textContent=t; el.classL
 window.addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return; if(e.code==='Space'){ e.preventDefault(); $('btn-hold').click(); } if(e.key==='t'||e.key==='T'){ setBottom(state.bottomView==='timeline'?'ticker':'timeline'); } if(e.key==='Escape') $('scrim').classList.remove('on'); });
 
 /* ---- init ---- */
-async function init(){
-  // Every launch of the app starts a clean show: new T-0, stock rocket, stock timeline, default
-  // site — nothing carried over from the last stream. Reloading the panel *during* a run is not a
-  // launch, so an accidental refresh mid-broadcast keeps the live countdown intact.
-  let freshLaunch=false;
-  try{ freshLaunch=await isNewLaunch(); }catch(e){}
-  if(freshLaunch){
-    const lang=state.lang;                       // language is an operator preference, not show data
-    clearPersistedState();
-    state=defaultState(); state.lang=lang;
-    state.clock=clkSetCountdown(600);            // brand-new T-0, ten minutes out
-  } else if(state.clock.mode==='idle') state.clock=clkSetCountdown(600); // looks live on first open
+function init(){
+  if(state.clock.mode==='idle') state.clock=clkSetCountdown(600); // looks live on first open
   buildSiteSelect(); fillForms(); bindForms(); buildEventEditor(); buildSources(); buildTemplateSelect();
   state.tlBg=bgLevel(state); ['solid','half','clear'].forEach(l=>$('bg-'+l).classList.toggle('on', l===state.tlBg));
   applyI18n(document, state.lang);
@@ -538,7 +528,6 @@ async function init(){
   setInterval(refreshWeather,120000);
   setInterval(()=>pushState(state), 3000);   // heartbeat: re-push so a restarted server / newly-added OBS source catches up
   syncStartLabel(); updateScale(); tickHeader();
-  if(freshLaunch) toast(tr('c_freshlaunch', state.lang));
 }
 init();
 </script>

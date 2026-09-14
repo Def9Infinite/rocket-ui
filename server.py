@@ -12,7 +12,7 @@ Run:  python3 server.py [port]        (default port 8000)
 Then open  http://localhost:<port>/index.html  for the control panel and use the
 http://localhost:<port>/<overlay>.html URLs as OBS Browser Sources (NOT "Local file").
 """
-import http.server, json, os, secrets, socket, sys, threading, time
+import http.server, json, os, socket, sys, threading
 
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("PORT", "8000"))
@@ -20,12 +20,6 @@ PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("PORT", "80
 # In-memory relay only (the control panel's localStorage is the real persistence).
 _lock = threading.Lock()
 _state = {"data": None, "v": -1}
-
-# A new id every time the server process starts. The control panel compares it against the one
-# it saved last time: a different id means "the app was launched again", so it throws away the
-# previous show and starts from defaults with a new T-0. Reloading the panel *within* one run
-# keeps the same id, so an accidental refresh mid-broadcast does NOT wipe the countdown.
-SESSION = {"id": secrets.token_hex(8), "started": int(time.time())}
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -50,14 +44,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        if self.path.split("?")[0] == "/session":
-            body = json.dumps(SESSION).encode("utf-8")
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
-            return
         if self.path.split("?")[0] == "/state":
             with _lock:
                 data = _state["data"]
