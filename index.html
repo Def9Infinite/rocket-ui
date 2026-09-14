@@ -330,6 +330,19 @@ const BUILTIN_TEMPLATES=[
      s1eng:'1 × S139 固体芯级',s1thrust:'4,700 千牛',s1burn:'100 秒',s1prop:'HTPB 固体推进剂',
      s2eng:'1 × 维卡斯（GS2）',s2thrust:'800 千牛',s2burn:'150 秒',fairing:'3.4 米 卵形整流罩',
      hasS3:true,s3eng:'1 × CE-7.5 低温上面级',s3thrust:'73.5 千牛',s3burn:'720 秒'}},
+  // Vega-C — four stages: three solids (P120C, Zefiro 40, Zefiro 9) + the liquid, restartable AVUM+ upper stage.
+  // Flies from the ELV pad at Kourou (site key `kourouelv`).
+  {name:'Vega-C',
+   rocket:{name:'Vega-C',operator:'AVIO · ESA',height:'34.8 m',diameter:'3.4 m',mass:'210,000 kg',payload:'2,300 kg (SSO)',
+     s1eng:'1 × P120C (solid)',s1thrust:'4,500 kN',s1burn:'135 s',s1prop:'HTPB (solid)',
+     s2eng:'1 × Zefiro 40 (solid)',s2thrust:'1,304 kN',s2burn:'93 s',fairing:'⌀3.3 m',
+     hasS3:true,s3eng:'1 × Zefiro 9 (solid)',s3thrust:'317 kN',s3burn:'120 s',
+     hasUS:true,usEng:'1 × RD-843 (AVUM+)',usThrust:'2.45 kN',usBurn:'restartable'},
+   zh:{name:'织女星C',operator:'阿维奥 · 欧洲空间局',height:'34.8 米',diameter:'3.4 米',mass:'210,000 千克',payload:'2,300 千克（太阳同步轨道）',
+     s1eng:'1 × P120C 固体发动机',s1thrust:'4,500 千牛',s1burn:'135 秒',s1prop:'HTPB 固体推进剂',
+     s2eng:'1 × Zefiro 40 固体发动机',s2thrust:'1,304 千牛',s2burn:'93 秒',fairing:'⌀3.3 米 整流罩',
+     hasS3:true,s3eng:'1 × Zefiro 9 固体发动机',s3thrust:'317 千牛',s3burn:'120 秒',
+     hasUS:true,usEng:'1 × RD-843（AVUM+ 上面级）',usThrust:'2.45 千牛',usBurn:'可多次点火'}},
 ];
 function buildTemplateSelect(){
   const L=state.lang, sel=$('tpl-select'), cur=sel.value;   // value stays the English key; only the label localizes
@@ -503,8 +516,18 @@ let toastTO; function toast(t){ const el=$('toast'); el.textContent=t; el.classL
 window.addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return; if(e.code==='Space'){ e.preventDefault(); $('btn-hold').click(); } if(e.key==='t'||e.key==='T'){ setBottom(state.bottomView==='timeline'?'ticker':'timeline'); } if(e.key==='Escape') $('scrim').classList.remove('on'); });
 
 /* ---- init ---- */
-function init(){
-  if(state.clock.mode==='idle') state.clock=clkSetCountdown(600); // looks live on first open
+async function init(){
+  // Every launch of the app starts a clean show: new T-0, stock rocket, stock timeline, default
+  // site — nothing carried over from the last stream. Reloading the panel *during* a run is not a
+  // launch, so an accidental refresh mid-broadcast keeps the live countdown intact.
+  let freshLaunch=false;
+  try{ freshLaunch=await isNewLaunch(); }catch(e){}
+  if(freshLaunch){
+    const lang=state.lang;                       // language is an operator preference, not show data
+    clearPersistedState();
+    state=defaultState(); state.lang=lang;
+    state.clock=clkSetCountdown(600);            // brand-new T-0, ten minutes out
+  } else if(state.clock.mode==='idle') state.clock=clkSetCountdown(600); // looks live on first open
   buildSiteSelect(); fillForms(); bindForms(); buildEventEditor(); buildSources(); buildTemplateSelect();
   state.tlBg=bgLevel(state); ['solid','half','clear'].forEach(l=>$('bg-'+l).classList.toggle('on', l===state.tlBg));
   applyI18n(document, state.lang);
@@ -515,6 +538,7 @@ function init(){
   setInterval(refreshWeather,120000);
   setInterval(()=>pushState(state), 3000);   // heartbeat: re-push so a restarted server / newly-added OBS source catches up
   syncStartLabel(); updateScale(); tickHeader();
+  if(freshLaunch) toast(tr('c_freshlaunch', state.lang));
 }
 init();
 </script>

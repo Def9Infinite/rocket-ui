@@ -22,6 +22,7 @@ const SITES = {
   taiyuan:    {name:'Taiyuan LC-9',           region:'Shanxi, China',   lat:38.849,  lon:111.608,  nameZh:'太原 LC-9',          regionZh:'中国 山西'},
   andoya:     {name:'Andøya Spaceport',       region:'Nordland, Norway',lat:69.068,  lon:15.490,   nameZh:'安岛航天港',         regionZh:'挪威 诺尔兰'},
   sdscslp:    {name:'Satish Dhawan SLP',      region:'Sriharikota, India', lat:13.7199, lon:80.2304, nameZh:'萨迪什·达万 第二发射台', regionZh:'印度 斯里赫里戈达'},
+  kourouelv:  {name:'Kourou ELV',             region:'French Guiana',   lat:5.2364,  lon:-52.7753, nameZh:'库鲁 ELV',           regionZh:'法属圭亚那'},
 };
 /* localized site name / region (falls back to English when no translation exists) */
 function siteName(key,lang){ const s=SITES[key]; return s? ((lang==='zh'&&s.nameZh)?s.nameZh:s.name) : ''; }
@@ -79,7 +80,7 @@ const I18N = {
     f_motors:'Motors', ph_boosters:'e.g. 4 × GEM-63', f_engines:'Engines', f_thrust:'Thrust', f_burn:'Burn Time', f_prop:'Propellant', f_engine:'Engine', f_fairing:'Fairing', ph_upper:'e.g. kick stage / Centaur',
     // control — timeline editor
     sec_ftimeline:'Flight Timeline', c_timeline_hint:'Time accepts T+02:35, -1:00, or 145 (seconds). ★ marks a major milestone. Events drive the moving timeline & the “next event” callouts.',
-    c_addevent:'+ ADD EVENT', c_reset:'RESET ALL',
+    c_addevent:'+ ADD EVENT', c_reset:'RESET ALL', c_freshlaunch:'NEW SESSION · FRESH T‑0 & DEFAULTS',
     // control — help modal
     h_title:'OBS SETUP', h_intro:'This control panel runs the show. Each overlay is its own transparent page you add to OBS as a Browser Source — they all sync to whatever you do here.',
     h_li1:'In OBS: + → Browser for each source. Use the http URL shown below — NOT “Local file” (live updates need the server) — and set the listed size.',
@@ -125,7 +126,7 @@ const I18N = {
     f_name:'名称', f_operator:'运营方', f_height:'高度', f_diameter:'直径', f_mass:'起飞质量', f_payload:'运力（近地轨道）',
     f_motors:'助推发动机', ph_boosters:'例如 4 × GEM-63', f_engines:'发动机', f_thrust:'推力', f_burn:'工作时间', f_prop:'推进剂', f_engine:'发动机', f_fairing:'整流罩', ph_upper:'例如 上面级 / 半人马座',
     sec_ftimeline:'飞行时间轴', c_timeline_hint:'时间可输入 T+02:35、-1:00 或 145（秒）。★ 表示重要节点。事件驱动移动时间轴与“下一事件”提示。',
-    c_addevent:'+ 添加事件', c_reset:'全部重置',
+    c_addevent:'+ 添加事件', c_reset:'全部重置', c_freshlaunch:'新会话 · 已重置 T‑0 与默认配置',
     h_title:'OBS 设置', h_intro:'本控制台用于导播。每个叠加层都是独立的透明页面，在 OBS 中作为“浏览器源”添加 — 它们会同步你在此处的所有操作。',
     h_li1:'在 OBS 中：+ → 浏览器，为每个源新建。使用下方的 http 网址（不要用“本地文件” — 实时更新依赖服务器），并设置所列尺寸。',
     h_li2:'在画布上摆放与缩放各源 — 此处的“节目监视器”给出参考布局。',
@@ -192,8 +193,29 @@ function defaultState(){
    state through the local sync server: the control panel POSTs /state, every page
    polls GET /state. localStorage is kept only as a same-browser fast path / persistence.
    Requires running server.py (plain `python3 -m http.server` has no /state endpoint). */
-const STATE_KEY = 'orbital-state-v1';
-const SYNC_URL  = 'state';          // relative to the page's directory
+const STATE_KEY   = 'orbital-state-v1';
+const SESSION_KEY = 'orbital-session-v1';
+const SYNC_URL    = 'state';        // relative to the page's directory
+const SESSION_URL = 'session';      // server run id — changes on every server (re)start
+
+/* isNewLaunch(): true when the sync server has restarted since this browser last saw it, i.e.
+   the app was LAUNCHED again (as opposed to the panel merely being reloaded). The control panel
+   uses it to start every run from a clean slate. Returns false when there is no sync server to
+   ask — we must not wipe the operator's show just because the server is unreachable. */
+async function isNewLaunch(){
+  let id=null;
+  try{
+    const r=await fetch(SESSION_URL,{cache:'no-store'});
+    if(r&&r.ok){ const j=await r.json(); id=j&&j.id; }
+  }catch(e){}
+  if(!id) return false;
+  let prev=null;
+  try{ prev=localStorage.getItem(SESSION_KEY); }catch(e){}
+  try{ localStorage.setItem(SESSION_KEY, id); }catch(e){}
+  return prev!==id;
+}
+/* wipe the persisted show so the next readState() falls back to defaultState() */
+function clearPersistedState(){ try{ localStorage.removeItem(STATE_KEY); }catch(e){} _last=null; _lastV=-1; }
 
 let _last = null, _lastV = -1;      // last applied state and its version
 
