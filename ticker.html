@@ -26,6 +26,7 @@ function render(state){
   const one=items.map(([k,v])=>`<span class="tk-item"><span class="tk-k">${esc(k)}</span><span class="tk-v">${esc(v)}</span></span>`).join('');
   $('ticker-track').innerHTML=one+one;
 }
+render(readState());   // paint immediately (content + BG level) instead of waiting for the next state change
 subscribe(render);
 // the PHASE/NEXT items change with the clock even when state hasn't been written,
 // so refresh the ticker content on a slow timer too

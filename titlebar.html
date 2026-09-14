@@ -31,10 +31,11 @@
 <script src="common.js"></script>
 <script>
 let state=readState();
-function paint(){ $('t-mission').textContent=state.mission; $('t-vehicle').textContent=state.vehicle; applyI18n(document, state.lang); }
+function paint(){ $('t-mission').textContent=state.mission; $('t-vehicle').textContent=state.vehicle; applyI18n(document, state.lang);
+  const r=document.querySelector('.titlebar'); r.classList.remove('bg-solid','bg-half','bg-clear'); r.classList.add('bg-'+bgLevel(state)); }
 function tickStatus(){ const si=statusInfo(state.clock); $('status-pill').className='status-pill '+si.cls; $('status-text').textContent=tr(si.key, state.lang); requestAnimationFrame(tickStatus); }
 subscribe(s=>{ state=s; paint(); });
-tickStatus();
+paint(); tickStatus();   // paint on load too — subscribe() only fires for a newer state version
 </script>
 </body>
 </html>

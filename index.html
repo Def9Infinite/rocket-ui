@@ -40,10 +40,12 @@ body{background:radial-gradient(1200px 700px at 75% -10%,#101a33 0%,#080b16 45%,
 .monitor-cap .legend{font-size:10px;color:var(--txt-faint);font-family:var(--mono)}
 .monitor{position:relative;width:100%;aspect-ratio:16/9;border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;background:#020306;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .stage1080{position:absolute;top:0;left:0;width:1920px;height:1080px;transform-origin:top left}
+/* stand-in for the captured video. A mid-tone "footage" backdrop (sky → pad → ground) instead of
+   near-black, so the overlays' BG levels (SOLID / HALF / CLEAR) are actually visible in the preview. */
 .feed-note{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
-  background:repeating-linear-gradient(45deg,#070b14,#070b14 22px,#090e18 22px,#090e18 44px);
-  color:#3c4a63;font-family:var(--display);font-weight:800;letter-spacing:6px;font-size:34px;text-align:center}
-.feed-note small{font-family:var(--mono);font-weight:400;letter-spacing:2px;font-size:15px;color:#2f3b52}
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.035) 0 22px,transparent 22px 44px),linear-gradient(180deg,#6f86a6 0%,#9fb1c6 48%,#5d6b7a 62%,#2c343d 100%);
+  color:rgba(12,18,30,.55);font-family:var(--display);font-weight:800;letter-spacing:6px;font-size:34px;text-align:center}
+.feed-note small{font-family:var(--mono);font-weight:400;letter-spacing:2px;font-size:15px;color:rgba(12,18,30,.5)}
 .ov{position:absolute;border:0;background:transparent;pointer-events:none}
 .ov.hidden{display:none}
 
@@ -516,18 +518,8 @@ let toastTO; function toast(t){ const el=$('toast'); el.textContent=t; el.classL
 window.addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return; if(e.code==='Space'){ e.preventDefault(); $('btn-hold').click(); } if(e.key==='t'||e.key==='T'){ setBottom(state.bottomView==='timeline'?'ticker':'timeline'); } if(e.key==='Escape') $('scrim').classList.remove('on'); });
 
 /* ---- init ---- */
-async function init(){
-  // Every launch of the app starts a clean show: new T-0, stock rocket, stock timeline, default
-  // site — nothing carried over from the last stream. Reloading the panel *during* a run is not a
-  // launch, so an accidental refresh mid-broadcast keeps the live countdown intact.
-  let freshLaunch=false;
-  try{ freshLaunch=await isNewLaunch(); }catch(e){}
-  if(freshLaunch){
-    const lang=state.lang;                       // language is an operator preference, not show data
-    clearPersistedState();
-    state=defaultState(); state.lang=lang;
-    state.clock=clkSetCountdown(600);            // brand-new T-0, ten minutes out
-  } else if(state.clock.mode==='idle') state.clock=clkSetCountdown(600); // looks live on first open
+function init(){
+  if(state.clock.mode==='idle') state.clock=clkSetCountdown(600); // looks live on first open
   buildSiteSelect(); fillForms(); bindForms(); buildEventEditor(); buildSources(); buildTemplateSelect();
   state.tlBg=bgLevel(state); ['solid','half','clear'].forEach(l=>$('bg-'+l).classList.toggle('on', l===state.tlBg));
   applyI18n(document, state.lang);
@@ -538,7 +530,6 @@ async function init(){
   setInterval(refreshWeather,120000);
   setInterval(()=>pushState(state), 3000);   // heartbeat: re-push so a restarted server / newly-added OBS source catches up
   syncStartLabel(); updateScale(); tickHeader();
-  if(freshLaunch) toast(tr('c_freshlaunch', state.lang));
 }
 init();
 </script>
