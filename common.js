@@ -22,6 +22,7 @@ const SITES = {
   taiyuan:    {name:'Taiyuan LC-9',           region:'Shanxi, China',   lat:38.849,  lon:111.608,  nameZh:'太原 LC-9',          regionZh:'中国 山西'},
   andoya:     {name:'Andøya Spaceport',       region:'Nordland, Norway',lat:69.068,  lon:15.490,   nameZh:'安岛航天港',         regionZh:'挪威 诺尔兰'},
   sdscslp:    {name:'Satish Dhawan SLP',      region:'Sriharikota, India', lat:13.7199, lon:80.2304, nameZh:'萨迪什·达万 第二发射台', regionZh:'印度 斯里赫里戈达'},
+  kourouelv:  {name:'Kourou ELV',             region:'French Guiana',   lat:5.2364,  lon:-52.7753, nameZh:'库鲁 ELV',           regionZh:'法属圭亚那'},
 };
 /* localized site name / region (falls back to English when no translation exists) */
 function siteName(key,lang){ const s=SITES[key]; return s? ((lang==='zh'&&s.nameZh)?s.nameZh:s.name) : ''; }
