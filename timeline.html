@@ -86,7 +86,11 @@ function frame(){
   $('tl-now').textContent=(tNow==null?'STANDBY':fmt(tNow).full);
   requestAnimationFrame(frame);
 }
-subscribe(s=>{ state=s; const r=$('tl-root'); r.classList.remove('bg-solid','bg-half','bg-clear'); r.classList.add('bg-'+bgLevel(s)); });
+// Apply the BG level on load too: subscribe() only fires for a NEWER state version, so an OBS source
+// that loads after the last panel change would otherwise sit with no backing at all.
+function applyBg(s){ const r=$('tl-root'); r.classList.remove('bg-solid','bg-half','bg-clear'); r.classList.add('bg-'+bgLevel(s)); }
+applyBg(state);
+subscribe(s=>{ state=s; applyBg(s); });
 try{ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ builtSig=null; }); }catch(e){}  // re-measure once fonts load
 frame();
 </script>

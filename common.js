@@ -152,8 +152,9 @@ const DIR_ZH = ['北','北偏东','东北','东偏北','东','东偏南','东南
 function wxCondText(code, lang){ if(lang==='zh') return WMO_ZH[code]||'—'; const m=WMO[code]; return m?m[0]:'—'; }
 function dirNameI18n(d, lang){ return lang==='zh' ? DIR_ZH[Math.round(d/22.5)%16] : dirName(d); }
 function wxVerdictText(verdict, lang){ return verdict==='GO' ? tr('wx_go',lang) : tr('wx_nogo',lang); }
-/* bottom-band background level: 'solid' | 'half' | 'clear' (with back-compat for old tlClear) */
-function bgLevel(state){ return state.tlBg || (state.tlClear ? 'clear' : 'half'); }
+/* bar background level for the title bar + bottom band: 'solid' | 'half' | 'clear'
+   (with back-compat for the old boolean tlClear). Defaults to near-opaque SOLID. */
+function bgLevel(state){ return state.tlBg || (state.tlClear ? 'clear' : 'solid'); }
 
 /* ---------- default mission ---------- */
 function defaultState(){
@@ -162,7 +163,7 @@ function defaultState(){
     vehicle:'FALCON 9 BLOCK 5',
     site:'slc40',
     bottomView:'timeline',                    // 'timeline' | 'ticker'
-    tlBg:'half',                              // bottom band background: 'solid' | 'half' | 'clear'
+    tlBg:'solid',                             // title bar + bottom band background: 'solid' | 'half' | 'clear'
     lang:'en',                                // 'en' | 'zh'
     clock:{mode:'idle', t0:null, holdT:null}, // mode: idle | counting | hold
     weather:null,

@@ -40,10 +40,12 @@ body{background:radial-gradient(1200px 700px at 75% -10%,#101a33 0%,#080b16 45%,
 .monitor-cap .legend{font-size:10px;color:var(--txt-faint);font-family:var(--mono)}
 .monitor{position:relative;width:100%;aspect-ratio:16/9;border:1px solid var(--line-strong);border-radius:12px;overflow:hidden;background:#020306;box-shadow:0 20px 60px rgba(0,0,0,.5)}
 .stage1080{position:absolute;top:0;left:0;width:1920px;height:1080px;transform-origin:top left}
+/* stand-in for the captured video. A mid-tone "footage" backdrop (sky → pad → ground) instead of
+   near-black, so the overlays' BG levels (SOLID / HALF / CLEAR) are actually visible in the preview. */
 .feed-note{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
-  background:repeating-linear-gradient(45deg,#070b14,#070b14 22px,#090e18 22px,#090e18 44px);
-  color:#3c4a63;font-family:var(--display);font-weight:800;letter-spacing:6px;font-size:34px;text-align:center}
-.feed-note small{font-family:var(--mono);font-weight:400;letter-spacing:2px;font-size:15px;color:#2f3b52}
+  background:repeating-linear-gradient(45deg,rgba(255,255,255,.035) 0 22px,transparent 22px 44px),linear-gradient(180deg,#6f86a6 0%,#9fb1c6 48%,#5d6b7a 62%,#2c343d 100%);
+  color:rgba(12,18,30,.55);font-family:var(--display);font-weight:800;letter-spacing:6px;font-size:34px;text-align:center}
+.feed-note small{font-family:var(--mono);font-weight:400;letter-spacing:2px;font-size:15px;color:rgba(12,18,30,.5)}
 .ov{position:absolute;border:0;background:transparent;pointer-events:none}
 .ov.hidden{display:none}
 

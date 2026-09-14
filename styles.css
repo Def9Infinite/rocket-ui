@@ -133,9 +133,15 @@ body{font-family:var(--sans);color:var(--txt);background:transparent;-webkit-fon
 .tl-playhead{position:absolute;top:6px;bottom:6px;width:2px;left:50%;background:linear-gradient(180deg,transparent,var(--cyan) 16%,var(--cyan) 84%,transparent);z-index:5;box-shadow:0 0 12px var(--cyan)}
 .tl-now{position:absolute;top:6px;left:10px;z-index:6;font-family:var(--mono);font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:1px;background:rgba(4,7,14,.72);padding:2px 8px;border-radius:5px;border:1px solid var(--line)}
 
-/* bottom-band background levels (timeline + ticker) */
-.timeline.bg-solid,.ticker.bg-solid{background:linear-gradient(0deg,rgba(6,10,20,.97),rgba(6,10,20,.85));backdrop-filter:blur(6px);border-top:1px solid var(--line)}
-.timeline.bg-half,.ticker.bg-half{background:linear-gradient(0deg,rgba(6,10,20,.6),rgba(6,10,20,.28));backdrop-filter:blur(4px);border-top:1px solid var(--line)}
+/* bar background levels — title bar + bottom band (timeline / ticker), driven by the panel's BG control.
+   SOLID is near-opaque so the bars read cleanly over any footage; HALF lets the video show through;
+   CLEAR drops the backing entirely (text keeps its shadow). */
+.titlebar{min-height:100%;box-sizing:border-box}
+.titlebar.bg-solid{background:linear-gradient(180deg,rgba(6,10,20,.98),rgba(6,10,20,.94));border-bottom:1px solid var(--line-strong)}
+.titlebar.bg-half{background:linear-gradient(180deg,rgba(6,10,20,.7),rgba(6,10,20,.45));backdrop-filter:blur(4px);border-bottom:1px solid var(--line)}
+.titlebar.bg-clear{background:transparent;border-bottom:1px solid transparent}
+.timeline.bg-solid,.ticker.bg-solid{background:linear-gradient(0deg,rgba(6,10,20,.98),rgba(6,10,20,.94));border-top:1px solid var(--line-strong)}
+.timeline.bg-half,.ticker.bg-half{background:linear-gradient(0deg,rgba(6,10,20,.7),rgba(6,10,20,.45));backdrop-filter:blur(4px);border-top:1px solid var(--line)}
 .timeline.bg-clear,.ticker.bg-clear{background:transparent;backdrop-filter:none;border-top:1px solid rgba(120,160,220,.14)}
 
 /* ==================== TICKER ==================== */
